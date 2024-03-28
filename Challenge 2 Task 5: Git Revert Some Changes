@@ -1,0 +1,96 @@
+The Nautilus application development team was working on a git repository /usr/src/kodekloudrepos/news present on Storage server in Stratos DC. However, they reported an issue with the recent commits being pushed to this repo. They have asked the DevOps team to revert repo HEAD to last commit. Below are more details about the task:
+
+1.	In /usr/src/kodekloudrepos/news git repository, revert the latest commit ( HEAD ) to the previous commit (JFYI the previous commit hash should be with initial commit message ).
+
+2.	Use revert news message (please use all small letters for commit message) for the new revert commit.
+
+# Solution:
+
+thor@jump_host ~$ ssh natasha@ststor01
+The authenticity of host 'ststor01 (172.16.238.15)' can't be established.
+ECDSA key fingerprint is SHA256:DAneBUcGISrtxPBZb5Ey3IxekZWx8aa/q8amSPtwiII.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'ststor01,172.16.238.15' (ECDSA) to the list of known hosts.
+natasha@ststor01's password: 
+Permission denied, please try again.
+natasha@ststor01's password: 
+[natasha@ststor01 ~]$ sudo su - 
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for natasha: 
+[root@ststor01 ~]# ls -l /usr/src/kodekloudrepos/news/
+total 4
+-rw-r--r-- 1 root root 33 Mar 28 16:40 news.txt
+[root@ststor01 ~]# cd  /usr/src/kodekloudrepos/news/
+[root@ststor01 news]# git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        news.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+[root@ststor01 news]# git log
+commit 6844cd6d26e620ad41b3b44622df8c1df1f5341e (HEAD -> master, origin/master)
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:40:32 2024 +0000
+
+    add data.txt file
+
+commit 3df867bff710e80227b0f48bd2d857662708d368
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:40:32 2024 +0000
+
+    initial commit
+[root@ststor01 news]# git revert HEAD
+[master a64adf8] Revert "add data.txt file"
+ 1 file changed, 1 insertion(+)
+ create mode 100644 info.txt
+[root@ststor01 news]# git add .
+[root@ststor01 news]# git commit -m " revert news "
+[master f2be5a8]  revert news
+ 1 file changed, 1 insertion(+)
+ create mode 100644 news.txt
+[root@ststor01 news]# git log
+commit f2be5a84c0c8853a0523a66819da0c37a292ecfe (HEAD -> master)
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:49:13 2024 +0000
+
+     revert news
+
+commit a64adf8aa00a04cd4140c8f62591dda08bbfc50b
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:45:18 2024 +0000
+
+    Revert "add data.txt file"
+    
+    This reverts commit 6844cd6d26e620ad41b3b44622df8c1df1f5341e.
+
+commit 6844cd6d26e620ad41b3b44622df8c1df1f5341e (origin/master)
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:40:32 2024 +0000
+
+    add data.txt file
+
+commit 3df867bff710e80227b0f48bd2d857662708d368
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Mar 28 16:40:32 2024 +0000
+
+    initial commit
+[root@ststor01 news]# git status
+On branch master
+Your branch is ahead of 'origin/master' by 2 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+[root@ststor01 news]# git branch
+* master
+[root@ststor01 news]#
+
