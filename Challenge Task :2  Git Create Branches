@@ -1,0 +1,43 @@
+Nautilus developers are actively working on one of the project repositories, /usr/src/kodekloudrepos/ecommerce. Recently, they decided to implement some new features in the application, and they want to maintain those new changes in a separate branch. Below are the requirements that have been shared with the DevOps team:
+
+
+1.	On Storage server in Stratos DC create a new branch xfusioncorp_ecommerce from master branch in /usr/src/kodekloudrepos/ecommerce git repo.
+
+2.	Please do not try to make any changes in the code.
+
+
+thor@jump_host ~$ ssh natasha@ststor01
+The authenticity of host 'ststor01 (172.16.238.15)' can't be established.
+ECDSA key fingerprint is SHA256:AKfOsEu2cVbtCYuGSo9ENv8U+uUGIBGJCT23IunnOHM.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'ststor01,172.16.238.15' (ECDSA) to the list of known hosts.
+natasha@ststor01's password: 
+[natasha@ststor01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for natasha: 
+[root@ststor01 ~]# cd /usr/src/kodekloudrepos/ecommerce
+[root@ststor01 ecommerce]# ls -l
+total 8
+-rw-r--r-- 1 root root 34 Mar 28 15:54 data.txt
+-rw-r--r-- 1 root root 34 Mar 28 15:54 info.txt
+[root@ststor01 ecommerce]# git checkout master 
+Switched to branch 'master'
+Your branch is up to date with 'origin/master'.
+[root@ststor01 ecommerce]# git checkout -b xfusioncorp_ecommerce
+Switched to a new branch 'xfusioncorp_ecommerce'
+[root@ststor01 ecommerce]# git status
+On branch xfusioncorp_ecommerce
+nothing to commit, working tree clean
+[root@ststor01 ecommerce]# git branch -a 
+  kodekloud_ecommerce
+  master
+* xfusioncorp_ecommerce
+  remotes/origin/master
+[root@ststor01 ecommerce]#
