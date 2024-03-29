@@ -1,0 +1,36 @@
+The Nautilus team doesn't want its data to be accessed by any of the other groups/teams due to security reasons and want their data to be strictly accessed by the sysops group of the team.
+
+
+Setup a collaborative directory /sysops/data on app server 1 in Stratos Datacenter.
+
+The directory should be group owned by the group sysops and the group should own the files inside the directory. The directory should be read/write/execute to the user and group owners, and others should not have any access.
+
+# Solution:
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:2KSwAwhsLwnCOhxULjNjAeM2A35lYt7bIPxtZw5N2hs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# mkdir -p /sysops/data 
+[root@stapp01 ~]# ls -l -lsd /sysops/data/
+4 drwxr-xr-x 2 root root 4096 Mar 29 01:14 /sysops/data/
+[root@stapp01 ~]# chgrp -R devops /sysops/data
+chgrp: invalid group: ‘devops’
+[root@stapp01 ~]# chgrp -R sysops /sysops/data
+[root@stapp01 ~]#  ls -l -lsd /sysops/data/
+4 drwxr-xr-x 2 root sysops 4096 Mar 29 01:14 /sysops/data/
+[root@stapp01 ~]# chmod -R 2770 /sysops/data
+[root@stapp01 ~]#  ls -l -lsd /sysops/data/
+4 drwxrws--- 2 root sysops 4096 Mar 29 01:14 /sysops/data/
+[root@stapp01 ~]#
