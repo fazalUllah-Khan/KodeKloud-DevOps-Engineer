@@ -1,0 +1,677 @@
+The Nautilus system admins team has prepared scripts to automate several day-to-day tasks. They want them to be deployed on all app servers in Stratos DC on a set schedule. Before that they need to test similar functionality with a sample cron job. Therefore, perform the steps below:
+
+
+a. Install cronie package on all Nautilus app servers and start crond service.
+
+b. Add a cron */5 * * * * echo hello > /tmp/cron_text for root user.
+
+# Solution:
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:sknh6yGjSkQa9fkNqJHcY0UBzMETO69ygzsGE4tagyk.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+Permission denied, please try again.
+tony@stapp01's password: 
+Permission denied, please try again.
+tony@stapp01's password: 
+tony@stapp01: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+thor@jump_host ~$ ssh tony@stapp01
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# yum install cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                                    17 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                                    33 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                                      8.2 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                                       21 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                                      9.5 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       16 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       20 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                                2.0 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                              15 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder                     486 kB/s | 103 kB     00:00    
+Package cronie-1.5.2-8.el8.x86_64 is already installed.
+Dependencies resolved.
+==============================================================================================================
+ Package                       Architecture          Version                      Repository             Size
+==============================================================================================================
+Upgrading:
+ cronie                        x86_64                1.5.2-10.el8                 baseos                121 k
+ cronie-anacron                x86_64                1.5.2-10.el8                 baseos                 42 k
+
+Transaction Summary
+==============================================================================================================
+Upgrade  2 Packages
+
+Total download size: 163 k
+Downloading Packages:
+(1/2): cronie-anacron-1.5.2-10.el8.x86_64.rpm                                 854 kB/s |  42 kB     00:00    
+(2/2): cronie-1.5.2-10.el8.x86_64.rpm                                         1.6 MB/s | 121 kB     00:00    
+--------------------------------------------------------------------------------------------------------------
+Total                                                                         1.3 MB/s | 163 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                      1/1 
+  Upgrading        : cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Running scriptlet: cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Upgrading        : cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Running scriptlet: cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Verifying        : cronie-1.5.2-10.el8.x86_64                                                           1/4 
+  Verifying        : cronie-1.5.2-8.el8.x86_64                                                            2/4 
+  Verifying        : cronie-anacron-1.5.2-10.el8.x86_64                                                   3/4 
+  Verifying        : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+Installed products updated.
+
+Upgraded:
+  cronie-1.5.2-10.el8.x86_64                        cronie-anacron-1.5.2-10.el8.x86_64                       
+
+Complete!
+[root@stapp01 ~]# systemctl start crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@stapp01 ~]# systemctl start crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@stapp01 ~]# systemctl status crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run
+ 'systemctl daemon-reload' to reload units.
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:44:18 UTC; 1min 0s ago
+ Main PID: 796 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.1M
+   CGroup: /docker/115464bc46f54958bbdd49cddcef32bed15d8128f82b7f71937de3f046e66485/system.slice/crond.service
+           └─796 /usr/sbin/crond -n
+
+Mar 28 23:44:18 stapp01.stratos.xfusioncorp.com crond[796]: (CRON) INFO (running with inotify support)
+Mar 28 23:44:18 stapp01.stratos.xfusioncorp.com crond[796]: (CRON) INFO (@reboot jobs will be run at computer'
+s startup.)
+Mar 28 23:44:22 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:44:22 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 117
+Mar 28 23:44:22 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 117
+Mar 28 23:44:22 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:45:07 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:45:07 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 147
+Mar 28 23:45:07 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 147
+Mar 28 23:45:07 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+[root@stapp01 ~]# crontab -e
+no crontab for root - using an empty one
+crontab: no changes made to crontab
+[root@stapp01 ~]# crontab -l
+no crontab for root
+[root@stapp01 ~]# crontab -e
+no crontab for root - using an empty one
+crontab: installing new crontab
+[root@stapp01 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp01 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# crontab -e
+crontab: installing new crontab
+[root@stapp01 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# ls  /tmp/
+ks-script-kzk1nzfd  ks-script-l36mq90h
+[root@stapp01 ~]# ll  /tmp/
+-bash: ll: command not found
+[root@stapp01 ~]# ls -l  /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# systemctl start crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@stapp01 ~]# systemctl daemon-reload
+[root@stapp01 ~]# systemctl start crond.service
+[root@stapp01 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:44:18 UTC; 7min ago
+ Main PID: 796 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.9M
+   CGroup: /docker/115464bc46f54958bbdd49cddcef32bed15d8128f82b7f71937de3f046e66485/system.slice/crond.service
+           └─796 /usr/sbin/crond -n
+
+Mar 28 23:51:23 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 177
+Mar 28 23:51:23 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 177
+Mar 28 23:51:23 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:51:46 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dea
+d -> running
+Mar 28 23:51:46 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to r
+eset devices.list: Operation not permitted
+Mar 28 23:51:46 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to s
+et invocation ID on control group /docker/115464bc46f54958bbdd49cddcef32bed15d8128f82b7f71937de3f046e66485/sys
+tem.slice/crond.service, ignoring: Operation not permitted
+Mar 28 23:51:49 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:51:49 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 207
+Mar 28 23:51:49 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 207
+Mar 28 23:51:49 stapp01.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+[root@stapp01 ~]# crontab -e
+crontab: no changes made to crontab
+[root@stapp01 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp01 ~]# ls -l  /tmp/
+total 12
+-rw-r--r-- 1 root root   6 Mar 28 23:50 cron_text
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# exit
+logout
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:OwE+3g+J1nM6hdm0bK+/BIeC0vSaorf414CGrn6nqDA.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# yum install cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                                    27 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                                    30 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                                       43 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                                       30 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                                       11 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       15 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       42 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                                2.3 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                              16 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder                     762 kB/s | 103 kB     00:00    
+Package cronie-1.5.2-8.el8.x86_64 is already installed.
+Dependencies resolved.
+==============================================================================================================
+ Package                       Architecture          Version                      Repository             Size
+==============================================================================================================
+Upgrading:
+ cronie                        x86_64                1.5.2-10.el8                 baseos                121 k
+ cronie-anacron                x86_64                1.5.2-10.el8                 baseos                 42 k
+
+Transaction Summary
+==============================================================================================================
+Upgrade  2 Packages
+
+Total download size: 163 k
+Downloading Packages:
+(1/2): cronie-anacron-1.5.2-10.el8.x86_64.rpm                                 895 kB/s |  42 kB     00:00    
+(2/2): cronie-1.5.2-10.el8.x86_64.rpm                                         1.6 MB/s | 121 kB     00:00    
+--------------------------------------------------------------------------------------------------------------
+Total                                                                         1.3 MB/s | 163 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                      1/1 
+  Upgrading        : cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Running scriptlet: cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Upgrading        : cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Running scriptlet: cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Verifying        : cronie-1.5.2-10.el8.x86_64                                                           1/4 
+  Verifying        : cronie-1.5.2-8.el8.x86_64                                                            2/4 
+  Verifying        : cronie-anacron-1.5.2-10.el8.x86_64                                                   3/4 
+  Verifying        : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+Installed products updated.
+
+Upgraded:
+  cronie-1.5.2-10.el8.x86_64                        cronie-anacron-1.5.2-10.el8.x86_64                       
+
+Complete!
+[root@stapp02 ~]# systemctl start crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@stapp02 ~]# systemctl daemon-reload
+[root@stapp02 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:54:01 UTC; 26s ago
+ Main PID: 731 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.1M
+   CGroup: /docker/16fb9da3a959a28d447d09c4a945473dd43f1a085c482a0ec805d036a3a7f964/system.slice/crond.service
+           └─731 /usr/sbin/crond -n
+
+Mar 28 23:54:01 stapp02.stratos.xfusioncorp.com crond[731]: (CRON) INFO (RANDOM_DELAY will be scaled with fact
+or 45% if used.)
+Mar 28 23:54:01 stapp02.stratos.xfusioncorp.com crond[731]: (CRON) INFO (running with inotify support)
+Mar 28 23:54:01 stapp02.stratos.xfusioncorp.com crond[731]: (CRON) INFO (@reboot jobs will be run at computer'
+s startup.)
+Mar 28 23:54:07 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:54:07 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 121
+Mar 28 23:54:07 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 121
+Mar 28 23:54:07 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:54:20 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dea
+d -> running
+Mar 28 23:54:20 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to r
+eset devices.list: Operation not permitted
+Mar 28 23:54:20 stapp02.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to s
+et invocation ID on control group /docker/16fb9da3a959a28d447d09c4a945473dd43f1a085c482a0ec805d036a3a7f964/sys
+tem.slice/crond.service, ignoring: Operation not permitted
+[root@stapp02 ~]# crontab -e
+no crontab for root - using an empty one
+crontab: installing new crontab
+[root@stapp02 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp02 ~]# ls -l /tmp/
+total 12
+-rw-r--r-- 1 root root   6 Mar 28 23:55 cron_text
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp02 ~]# exit
+logout
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02 closed.
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:QGnpHeJ+OVToLJGZSIv0yz7n4awgWd2LUxckgGI+tQQ.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# yum install cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                                    19 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                                    31 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                                       34 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                                       24 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                                       28 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       28 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                                       44 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                                1.8 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                              14 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder                     688 kB/s | 103 kB     00:00    
+Package cronie-1.5.2-8.el8.x86_64 is already installed.
+Dependencies resolved.
+==============================================================================================================
+ Package                       Architecture          Version                      Repository             Size
+==============================================================================================================
+Upgrading:
+ cronie                        x86_64                1.5.2-10.el8                 baseos                121 k
+ cronie-anacron                x86_64                1.5.2-10.el8                 baseos                 42 k
+
+Transaction Summary
+==============================================================================================================
+Upgrade  2 Packages
+
+Total download size: 163 k
+Downloading Packages:
+(1/2): cronie-anacron-1.5.2-10.el8.x86_64.rpm                                 475 kB/s |  42 kB     00:00    
+(2/2): cronie-1.5.2-10.el8.x86_64.rpm                                         929 kB/s | 121 kB     00:00    
+--------------------------------------------------------------------------------------------------------------
+Total                                                                         895 kB/s | 163 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                      1/1 
+  Upgrading        : cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Running scriptlet: cronie-anacron-1.5.2-10.el8.x86_64                                                   1/4 
+  Upgrading        : cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Running scriptlet: cronie-1.5.2-8.el8.x86_64                                                            3/4 
+  Cleanup          : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Running scriptlet: cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+  Verifying        : cronie-1.5.2-10.el8.x86_64                                                           1/4 
+  Verifying        : cronie-1.5.2-8.el8.x86_64                                                            2/4 
+  Verifying        : cronie-anacron-1.5.2-10.el8.x86_64                                                   3/4 
+  Verifying        : cronie-anacron-1.5.2-8.el8.x86_64                                                    4/4 
+Installed products updated.
+
+Upgraded:
+  cronie-1.5.2-10.el8.x86_64                        cronie-anacron-1.5.2-10.el8.x86_64                       
+
+Complete!
+[root@stapp03 ~]# systemctl start crond.service
+Warning: The unit file, source configuration file or drop-ins of crond.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@stapp03 ~]# systemctl daemon-reload
+[root@stapp03 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:56:31 UTC; 25s ago
+ Main PID: 725 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.1M
+   CGroup: /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/system.slice/crond.service
+           └─725 /usr/sbin/crond -n
+
+Mar 28 23:56:31 stapp03.stratos.xfusioncorp.com crond[725]: (CRON) INFO (Syslog will be used instead of sendma
+il.)
+Mar 28 23:56:31 stapp03.stratos.xfusioncorp.com crond[725]: (CRON) INFO (RANDOM_DELAY will be scaled with fact
+or 28% if used.)
+Mar 28 23:56:31 stapp03.stratos.xfusioncorp.com crond[725]: (CRON) INFO (running with inotify support)
+Mar 28 23:56:31 stapp03.stratos.xfusioncorp.com crond[725]: (CRON) INFO (@reboot jobs will be run at computer'
+s startup.)
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 121
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 121
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:56:48 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dea
+d -> running
+Mar 28 23:56:48 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to s
+et invocation ID on control group /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/sys
+tem.slice/crond.service, ignoring: Operation not permitted
+[root@stapp03 ~]# crontab -e
+no crontab for root - using an empty one
+crontab: installing new crontab
+[root@stapp03 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp03 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]# crontab -e
+crontab: installing new crontab
+[root@stapp03 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp03 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]# systemctl start crond.service
+[root@stapp03 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:56:31 UTC; 2min 17s ago
+ Main PID: 725 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.2M
+   CGroup: /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/system.slice/crond.service
+           └─725 /usr/sbin/crond -n
+
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 121
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 121
+Mar 28 23:56:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:56:48 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dea
+d -> running
+Mar 28 23:56:48 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Failed to s
+et invocation ID on control group /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/sys
+tem.slice/crond.service, ignoring: Operation not permitted
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 151
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 151
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+[root@stapp03 ~]# crontab -e
+crontab: installing new crontab
+[root@stapp03 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp03 ~]# ls -l /tmp/
+total 8
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]# yum install cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Last metadata expiration check: 0:04:00 ago on Thu Mar 28 23:56:27 2024.
+Package cronie-1.5.2-10.el8.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+[root@stapp03 ~]# systemctl start crond.service
+[root@stapp03 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Thu 2024-03-28 23:56:31 UTC; 4min 23s ago
+ Main PID: 725 (crond)
+    Tasks: 1 (limit: 1340692)
+   Memory: 2.3M
+   CGroup: /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/system.slice/crond.service
+           └─725 /usr/sbin/crond -n
+
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 151
+Mar 28 23:58:39 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 28 23:59:01 stapp03.stratos.xfusioncorp.com crond[725]: (root) RELOAD (/var/spool/cron/root)
+Mar 29 00:00:01 stapp03.stratos.xfusioncorp.com crond[725]: (root) RELOAD (/var/spool/cron/root)
+Mar 29 00:00:01 stapp03.stratos.xfusioncorp.com crond[955]: pam_systemd(crond:session)
+: Failed to create session: Unit systemd-logind.service is masked.
+Mar 29 00:00:01 stapp03.stratos.xfusioncorp.com CROND[962]: (root) CMD (echo hello > /tmp/cron_text)
+Mar 29 00:00:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Trying to e
+nqueue job crond.service/start/replace
+Mar 29 00:00:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Installed n
+ew job crond.service/start as 181
+Mar 29 00:00:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Enqueued jo
+b crond.service/start as 181
+Mar 29 00:00:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+[root@stapp03 ~]# yum uninstall cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+No such command: uninstall. Please use /usr/bin/yum --help
+It could be a YUM plugin command, try: "yum install 'dnf-command(uninstall)'"
+[root@stapp03 ~]# yum remove cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Dependencies resolved.
+==============================================================================================================
+ Package                    Architecture       Version                              Repository           Size
+==============================================================================================================
+Removing:
+ cronie                     x86_64             1.5.2-10.el8                         @baseos             306 k
+Removing unused dependencies:
+ cronie-anacron             x86_64             1.5.2-10.el8                         @baseos              46 k
+ crontabs                   noarch             1.11-17.20190603git.el8              @baseos              21 k
+
+Transaction Summary
+==============================================================================================================
+Remove  3 Packages
+
+Freed space: 373 k
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                      1/1 
+  Erasing          : crontabs-1.11-17.20190603git.el8.noarch                                              1/3 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/3 
+  Erasing          : cronie-1.5.2-10.el8.x86_64                                                           2/3 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/3 
+  Erasing          : cronie-anacron-1.5.2-10.el8.x86_64                                                   3/3 
+  Running scriptlet: cronie-anacron-1.5.2-10.el8.x86_64                                                   3/3 
+  Verifying        : cronie-1.5.2-10.el8.x86_64                                                           1/3 
+  Verifying        : cronie-anacron-1.5.2-10.el8.x86_64                                                   2/3 
+  Verifying        : crontabs-1.11-17.20190603git.el8.noarch                                              3/3 
+Installed products updated.
+
+Removed:
+  cronie-1.5.2-10.el8.x86_64   cronie-anacron-1.5.2-10.el8.x86_64   crontabs-1.11-17.20190603git.el8.noarch  
+
+Complete!
+[root@stapp03 ~]# yum install cronie -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Last metadata expiration check: 0:07:03 ago on Thu Mar 28 23:56:27 2024.
+Dependencies resolved.
+==============================================================================================================
+ Package                    Architecture       Version                               Repository          Size
+==============================================================================================================
+Installing:
+ cronie                     x86_64             1.5.2-10.el8                          baseos             121 k
+Installing dependencies:
+ cronie-anacron             x86_64             1.5.2-10.el8                          baseos              42 k
+ crontabs                   noarch             1.11-17.20190603git.el8               baseos              25 k
+
+Transaction Summary
+==============================================================================================================
+Install  3 Packages
+
+Total download size: 189 k
+Installed size: 373 k
+Downloading Packages:
+(1/3): crontabs-1.11-17.20190603git.el8.noarch.rpm                            262 kB/s |  25 kB     00:00    
+(2/3): cronie-anacron-1.5.2-10.el8.x86_64.rpm                                 410 kB/s |  42 kB     00:00    
+(3/3): cronie-1.5.2-10.el8.x86_64.rpm                                         810 kB/s | 121 kB     00:00    
+--------------------------------------------------------------------------------------------------------------
+Total                                                                         474 kB/s | 189 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                      1/1 
+  Installing       : cronie-anacron-1.5.2-10.el8.x86_64                                                   1/3 
+  Running scriptlet: cronie-anacron-1.5.2-10.el8.x86_64                                                   1/3 
+  Installing       : cronie-1.5.2-10.el8.x86_64                                                           2/3 
+  Running scriptlet: cronie-1.5.2-10.el8.x86_64                                                           2/3 
+  Installing       : crontabs-1.11-17.20190603git.el8.noarch                                              3/3 
+  Running scriptlet: crontabs-1.11-17.20190603git.el8.noarch                                              3/3 
+  Verifying        : cronie-1.5.2-10.el8.x86_64                                                           1/3 
+  Verifying        : cronie-anacron-1.5.2-10.el8.x86_64                                                   2/3 
+  Verifying        : crontabs-1.11-17.20190603git.el8.noarch                                              3/3 
+Installed products updated.
+
+Installed:
+  cronie-1.5.2-10.el8.x86_64   cronie-anacron-1.5.2-10.el8.x86_64   crontabs-1.11-17.20190603git.el8.noarch  
+
+Complete!
+[root@stapp03 ~]# systemctl start crond.service
+[root@stapp03 ~]# systemctl status crond.service
+● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Fri 2024-03-29 00:03:45 UTC; 8s ago
+ Main PID: 1205 (crond)
+    Tasks: 2 (limit: 1340692)
+   Memory: 5.7M
+   CGroup: /docker/8d17254b33a2a7c7773ab14242dca4fdec48c16e57c94f4c8e39d11d33e472d8/system.slice/crond.service
+           ├─1045 /usr/sbin/anacron -s
+           └─1205 /usr/sbin/crond -n
+
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Changed dea
+d -> running
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com systemd[1]: crond.service: Job crond.s
+ervice/start finished, result=done
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com systemd[1]: Started Command Scheduler.
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com systemd[1205]: crond.service: Executin
+g: /usr/sbin/crond -n
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com crond[1205]: (CRON) STARTUP (1.5.2)
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com crond[1205]: (CRON) INFO (Syslog will be used instead of sendm
+ail.)
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com crond[1205]: (CRON) INFO (RANDOM_DELAY will be scaled with fac
+tor 37% if used.)
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com crond[1205]: (CRON) INFO (running with inotify support)
+Mar 29 00:03:45 stapp03.stratos.xfusioncorp.com crond[1205]: (CRON) INFO (@reboot jobs will be run at computer
+'s startup.)
+[root@stapp03 ~]# crontab -e
+crontab: installing new crontab
+[root@stapp03 ~]# crontab -l
+*/5 * * * * echo hello > /tmp/cron_text
+[root@stapp03 ~]# ls -l /tmp/
+total 12
+-rw-r--r-- 1 root root   6 Mar 29 00:00 cron_text
+-rwx------ 1 root root 291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root 701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]#
