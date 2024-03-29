@@ -1,0 +1,145 @@
+During the monthly compliance meeting, it was pointed out that several servers in the Stratos DC do not have a valid banner. The security team has provided serveral approved templates which should be applied to the servers to maintain compliance. These will be displayed to the user upon a successful login.
+
+
+Update the message of the day on all application and db servers for Nautilus. Make use of the approved template located at /home/thor/nautilus_banner on jump host
+
+# Solution:
+thor@jump_host ~$ ls -l /home/thor/nautilus_banner
+-rw-r--r-- 1 root root 2530 Mar 29 00:38 /home/thor/nautilus_banner
+thor@jump_host ~$ scp -r  /home/thor/nautilus_banner  tony@stapp01:/tmp
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:i5ikhMmBGhnO7qN/irZPGx5ZLhON4ymFgeby+SYzG5o.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+nautilus_banner                                                     100% 2530     7.3MB/s   00:00    
+thor@jump_host ~$ ssh tony@stapp01
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# mv /tmp/nautilus_banner  /etc/motd
+mv: overwrite '/etc/motd'? yes
+[root@stapp01 ~]# exit
+logout
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:eyc4/0+uLuVbmFxNT7/wysnWeowiOL9HgjV9aSjhxXg.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02 closed.
+thor@jump_host ~$ ls -l /home/thor/nautilus_banner
+-rw-r--r-- 1 root root 2530 Mar 29 00:38 /home/thor/nautilus_banner
+thor@jump_host ~$ scp -r /home/thor/nautilus_banner  steve@stapp02:/tmp
+steve@stapp02's password: 
+nautilus_banner                                                     100% 2530     9.9MB/s   00:00    
+thor@jump_host ~$ scp -r /home/thor/nautilus_banner  banner@stapp03:/tmp
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:OaQsYbyFvw0F2dsmybxkl6huexaZYEoFdPi7yTsr+QI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+nautilus_banner                                                     100% 2530     4.2MB/s   00:00    
+thor@jump_host ~$ ssh steve@stapp02
+steve@stapp02's password: 
+Last login: Fri Mar 29 01:01:07 2024 from 172.16.238.2
+[steve@stapp02 ~]$ mv /tmp/nautilus_banner  /etc/motd
+mv: replace '/etc/motd', overriding mode 0644 (rw-r--r--)? yes
+mv: cannot move '/tmp/nautilus_banner' to '/etc/motd': Permission denied
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# mv /tmp/nautilus_banner  /etc/motd
+mv: overwrite '/etc/motd'? yes
+[root@stapp02 ~]# exit
+logout
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02 closed.
+thor@jump_host ~$ ssh banner@stapp03
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# mv /tmp/nautilus_banner  /etc/motd
+mv: overwrite '/etc/motd'? yes
+[root@stapp03 ~]# exit
+logout
+[banner@stapp03 ~]$ exit
+logout
+Connection to stapp03 closed.
+thor@jump_host ~$
+
+Last login: Fri Mar 29 00:38:47 UTC 2024 on pts/0
+thor@jump_host ~$ ssh tony@stapp01
+tony@stapp01's password: 
+Last login: Fri Mar 29 00:44:06 2024 from 172.16.238.2
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh tony@stapp01
+tony@stapp01's password: 
+Last login: Fri Mar 29 00:45:57 2024 from 172.16.238.2
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh peter@stdb01
+The authenticity of host 'stdb01 (172.16.239.10)' can't be established.
+ECDSA key fingerprint is SHA256:OaNWBEUhDCrzsDBAHHAA2q46HS6SUVFy+2aVLV+WKpQ.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stdb01,172.16.239.10' (ECDSA) to the list of known hosts.
+peter@stdb01's password: 
+[peter@stdb01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for peter: 
+[root@stdb01 ~]# exit
+logout
+[peter@stdb01 ~]$ exit
+logout
+Connection to stdb01 closed.
+thor@jump_host ~$ scp -r  /home/thor/nautilus_banner  peter@stdb01:/tmp
+peter@stdb01's password: 
+nautilus_banner                                                     100% 2530     7.7MB/s   00:00    
+thor@jump_host ~$ ssh peter@stdb01
+peter@stdb01's password: 
+Last login: Fri Mar 29 00:55:18 2024 from 172.16.239.5
+[peter@stdb01 ~]$ sudo su -
+[sudo] password for peter: 
+Last login: Fri Mar 29 00:55:28 UTC 2024 on pts/0
+[root@stdb01 ~]# mv /tmp/nautilus_banner  /etc/motd
+mv: overwrite '/etc/motd'? yes
+[root@stdb01 ~]#
