@@ -1,0 +1,148 @@
+There is some data on Nautilus App Server 3 in Stratos DC. Data needs to be altered in several of the files. On Nautilus App Server 3, alter the /home/BSD.txt file as per details given below:
+
+
+a. Delete all lines containing word software and save results in /home/BSD_DELETE.txt file. (Please be aware of case sensitivity)
+
+
+b. Replace all occurrence of word and to is and save results in /home/BSD_REPLACE.txt file.
+
+
+Note: Let's say you are asked to replace word to with from. In that case, make sure not to alter any words containing the string itself; for example upto, contributor etc.
+
+# Solution:
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:sQMt5l8WMDAVJUF5cGSnhFIIrf5KF8BlyyCT7TYQr+U.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# ls -l /home/
+total 20
+-rw-r--r-- 1 banner  banner  9919 Mar 29 01:21 BSD.txt
+drwx------ 1 ansible ansible 4096 Mar  6  2023 ansible
+drwx------ 1 banner  banner  4096 Aug 29  2023 banner
+[root@stapp03 ~]# cat /home/BSD.txt |grep software
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+3. All advertising materials mentioning features or use of this software
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+[root@stapp03 ~]# sed '/\<software\>/d' /home/BSD.txt > /home/BSD_DELETE.txt
+[root@stapp03 ~]# cat /home/BSD_DELETE.txt |grep software
+[root@stapp03 ~]# cat /home/BSD.txt |grep and
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+Redistribution and use in source and binary forms, with or without
+   notice, this list of conditions and the following disclaimer.
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+[root@stapp03 ~]# sed 's/\band\b/is/g' /home/BSD.txt > /home/BSD_REPLACE.txt
+[root@stapp03 ~]# 
+[root@stapp03 ~]# [root@stapp03 ~]#
+-bash: [root@stapp03: command not found
+[root@stapp03 ~]# 
+[root@stapp03 ~]# sed 's/\band\b/is/g' /home/BSD.txt > /home/BSD_REPLACE.txt
+[root@stapp03 ~]# cat /home/BSD_REPLACE.txt |grep and
+[root@stapp03 ~]# cat /home/BSD_REPLACE.txt |grep is
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+Redistribution is use in source is binary forms, with or without
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions is the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions is the following disclaimer in the
+   documentation is/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by the <organization>.
+   derived from this software without specific prior written permission.
+[root@stapp03 ~]#
