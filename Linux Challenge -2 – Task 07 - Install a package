@@ -1,0 +1,16 @@
+As per new application requirements shared by the Nautilus project development team, serveral new packages need to be installed on all app servers in Stratos Datacenter. Most of them are completed except for samba.
+
+
+Therefore, install the samba package on all app-servers.
+
+
+ssh tony@stapp01 , steve@stapp02 , banner@stapp03
+enter password 
+login sudo su - 
+CMDs: 
+   Step 1 :  hostnamectl
+   Step 2 : sudo yum update -y
+   Step 3 : sudo yum search samba
+   Step 4 : rpm -qa | grep samba 
+   Step 5 : sudo yum install samaba
+   Step 6 : sudo yum repolist         -- TO CHECK REPO LIST
