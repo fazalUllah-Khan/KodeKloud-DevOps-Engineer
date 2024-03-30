@@ -1,0 +1,169 @@
+Some users of the monitoring app have reported issues with xFusionCorp Industries mail server. They have a mail server in Stork DC where they are using postfix mail transfer agent. Postfix service seems to fail. Try to identify the root cause and fix it.
+
+# Solution
+Upon postfix config check we foudn inet_interface=local was enabled along with "All"
+
+thor@jump_host ~$ ssh groot@stmail01
+The authenticity of host 'stmail01 (172.16.238.17)' can't be established.
+ECDSA key fingerprint is SHA256:pLhaOuN4AvBBkuXiRoHYic8m9fj/LZJhClD67IhopYU.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stmail01,172.16.238.17' (ECDSA) to the list of known hosts.
+groot@stmail01's password: 
+[groot@stmail01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for groot: 
+[root@stmail01 ~]# systemctl start postfix
+Job for postfix.service failed because the control process exited with error code.
+See "systemctl status postfix.service" and "journalctl -xe" for details.
+[root@stmail01 ~]# systemctl start postfix -l
+Job for postfix.service failed because the control process exited with error code.
+See "systemctl status postfix.service" and "journalctl -xe" for details.
+[root@stmail01 ~]# systemctl start postfix -ls
+systemctl: option requires an argument -- 's'
+[root@stmail01 ~]# systemctl start postfix -l
+Job for postfix.service failed because the control process exited with error code.
+See "systemctl status postfix.service" and "journalctl -xe" for details.
+[root@stmail01 ~]# ^C
+[root@stmail01 ~]# ^C
+[root@stmail01 ~]# systemctl start postfix -ls -l
+Failed to parse signal string -l.
+[root@stmail01 ~]# systemctl start postfix -ll
+Job for postfix.service failed because the control process exited with error code.
+See "systemctl status postfix.service" and "journalctl -xe" for details.
+[root@stmail01 ~]# systemctl start postfix -|
+> ^C
+[root@stmail01 ~]# systemctl status postfix.service
+● postfix.service - Postfix Mail Transport Agent
+   Loaded: loaded (/usr/lib/systemd/system/postfix.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Sat 2024-03-30 23:19:49 UTC; 2min 37s ago
+  Process: 939 ExecStart=/usr/sbin/postfix start (code=exited, status=1/FAILURE)
+  Process: 938 ExecStartPre=/usr/libexec/postfix/chroot-update (code=exited, status=0/SUCCESS)
+  Process: 923 ExecStartPre=/usr/libexec/postfix/aliasesdb (code=exited, status=75)
+  Process: 908 ExecStartPre=/usr/sbin/restorecon -R /var/spool/postfix/pid/master.pid (code=exited, st
+atus=0/SUCCESS)
+
+Mar 30 23:19:48 stmail01.stratos.xfusioncorp.com postfix[939]: warning: /etc/p
+ostfix/main.cf, line 135: overriding earlier entry: inet_interfaces=all
+Mar 30 23:19:48 stmail01.stratos.xfusioncorp.com postfix[939]: fatal: paramete
+r inet_interfaces: no local interface found for ::1
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Child 939 belongs to postfix.service.
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Control process exited, code=exited status=1
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Got final SIGCHLD for state start.
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Failed with result 'exit-code'.
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Changed start -> failed
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Job postfix.service/start finished, result=failed
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: Failed to start P
+ostfix Mail Transport Agent.
+Mar 30 23:19:49 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Unit entered failed state.
+[root@stmail01 ~]# fatal: paramete
+-bash: fatal:: command not found
+[root@stmail01 ~]# cat /etc/postfix/main.cf |grep inet_interface
+# The inet_interfaces parameter specifies the network interface
+inet_interfaces = all
+#inet_interfaces = $myhostname
+#inet_interfaces = $myhostname, localhost
+inet_interfaces = localhost
+# the address list specified with the inet_interfaces parameter.
+# receives mail on (see the inet_interfaces parameter).
+# to $mydestination, $inet_interfaces or $proxy_interfaces.
+# - destinations that match $inet_interfaces or $proxy_interfaces,
+# unknown@[$inet_interfaces] or unknown@[$proxy_interfaces] is returned
+[root@stmail01 ~]# vi /etc/postfix/main.cf
+[root@stmail01 ~]# cat /etc/postfix/main.cf |grep inet_interface
+# The inet_interfaces parameter specifies the network interface
+inet_interfaces = all
+#inet_interfaces = $myhostname
+#inet_interfaces = $myhostname, localhost
+#inet_interfaces = localhost
+# the address list specified with the inet_interfaces parameter.
+# receives mail on (see the inet_interfaces parameter).
+# to $mydestination, $inet_interfaces or $proxy_interfaces.
+# - destinations that match $inet_interfaces or $proxy_interfaces,
+# unknown@[$inet_interfaces] or unknown@[$proxy_interfaces] is returned
+[root@stmail01 ~]# systemctl start postfix
+[root@stmail01 ~]# systemctl status postfix
+● postfix.service - Postfix Mail Transport Agent
+   Loaded: loaded (/usr/lib/systemd/system/postfix.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-03-30 23:26:10 UTC; 7s ago
+  Process: 1039 ExecStart=/usr/sbin/postfix start (code=exited, status=0/SUCCESS)
+  Process: 1038 ExecStartPre=/usr/libexec/postfix/chroot-update (code=exited, status=0/SUCCESS)
+  Process: 1015 ExecStartPre=/usr/libexec/postfix/aliasesdb (code=exited, status=0/SUCCESS)
+  Process: 1002 ExecStartPre=/usr/sbin/restorecon -R /var/spool/postfix/pid/master.pid (code=exited, s
+tatus=0/SUCCESS)
+ Main PID: 1301 (master)
+    Tasks: 3 (limit: 1340692)
+   Memory: 16.8M
+   CGroup: /docker/2526826b9dc1ebf6fa28db0812eec53ccedf9ffe5a30203fdde62c10961a0c8b/system.slice/postf
+ix.service
+           ├─1301 /usr/libexec/postfix/master -w
+           ├─1302 pickup -l -t unix -u
+           └─1303 qmgr -l -t unix -u
+
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com postfix/master[1301]: daemon started -- version 3.5.8
+, configuration /etc/postfix
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Child 1039 belongs to postfix.service.
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Control process exited, code=exited status=0
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Got final SIGCHLD for state start.
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+New main PID 1301 belongs to service, we are happy.
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Main PID loaded: 1301
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Changed start -> running
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Job postfix.service/start finished, result=done
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: Started Postfix Mail Transport Agent.
+Mar 30 23:26:10 stmail01.stratos.xfusioncorp.com systemd[1]: postfix.service: 
+Failed to send unit change signal for postfix.service: Connection reset by peer
+[root@stmail01 ~]# 
+[root@stmail01 ~]# logout
+[groot@stmail01 ~]$ logout
+Connection to stmail01 closed.
+thor@jump_host ~$ telnet stmail01 25
+Trying 172.16.238.17...
+Connected to stmail01.
+Escape character is '^]'.
+220 stmail01.stratos.xfusioncorp.com ESMTP Postfix
+
+500 5.5.2 Error: bad syntax
+
+500 5.5.2 Error: bad syntax
+
+500 5.5.2 Error: bad syntax
+
+500 5.5.2 Error: bad syntax
+^C
+exit
+
+
+^[
+^^
+^^
+^
+^C^C
+
+
+
+
+
+
+
+Connection closed by foreign host.                                  
+thor@jump_host ~$
