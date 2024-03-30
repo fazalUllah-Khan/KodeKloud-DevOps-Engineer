@@ -1,0 +1,527 @@
+To secure our Nautilus infrastructure in Stratos Datacenter we have decided to install and configure firewalld on all app servers. We have Apache and Nginx services running on these apps. Nginx is running as a reverse proxy server for Apache. We might have more robust firewall settings in the future, but for now we have decided to go with the given requirements listed below:
+
+
+a. Allow all incoming connections on Nginx port, i.e 80.
+
+b. Block all incoming connections on Apache port, i.e 8080.
+
+c. All rules must be permanent.
+
+d. Zone should be public.
+
+e. If Apache or Nginx services aren't running already, please make sure to start them.
+
+# Solution:
+thor@jump_host ~$ ssh steve@stapp02
+steve@stapp02's password: 
+Last login: Sat Mar 30 16:30:21 2024 from 172.16.238.3
+[steve@stapp02 ~]$ sudo su -
+[sudo] password for steve: 
+Last login: Sat Mar 30 16:30:27 UTC 2024 on pts/0
+[root@stapp02 ~]# systemctl status httpd &&  systemctl status nginx
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-03-30 15:57:04 UTC; 34min ago
+     Docs: man:httpd.service(8)
+ Main PID: 567 (httpd)
+   Status: "Running, listening on: port 8080"
+    Tasks: 213 (limit: 1340692)
+   Memory: 22.1M
+   CGroup: /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d26f3110c522f2290/system.slice/httpd
+.service
+           ├─567 /usr/sbin/httpd -DFOREGROUND
+           ├─589 /usr/sbin/httpd -DFOREGROUND
+           ├─592 /usr/sbin/httpd -DFOREGROUND
+           ├─594 /usr/sbin/httpd -DFOREGROUND
+           └─601 /usr/sbin/httpd -DFOREGROUND
+
+Mar 30 16:29:44 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:29:54 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:14 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:24 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:44 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:30:54 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 567 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:31:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+
+[root@stapp02 ~]# grep -i Listen /etc/httpd/conf/ht*  /etc/nginx/nginx.conf
+/etc/httpd/conf/httpd.conf:# Listen: Allows you to bind Apache to specific IP addresses and/or
+/etc/httpd/conf/httpd.conf:# Change this to Listen on specific IP addresses as shown below to 
+/etc/httpd/conf/httpd.conf:#Listen 12.34.56.78:80
+/etc/httpd/conf/httpd.conf:Listen 8080
+/etc/nginx/nginx.conf:        listen       80 default_server;
+/etc/nginx/nginx.conf:        listen       [::]:80 default_server;
+/etc/nginx/nginx.conf:#        listen       443 ssl http2 default_server;
+/etc/nginx/nginx.conf:#        listen       [::]:443 ssl http2 default_server;
+[root@stapp02 ~]# yum install -y firewalld
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Last metadata expiration check: 0:07:20 ago on Sat Mar 30 16:24:29 2024.
+Dependencies resolved.
+======================================================================================================
+ Package                          Architecture     Version                     Repository        Size
+======================================================================================================
+Installing:
+ firewalld                        noarch           0.9.11-4.el8                baseos           580 k
+Installing dependencies:
+ firewalld-filesystem             noarch           0.9.11-4.el8                baseos            78 k
+ ipset                            x86_64           7.1-1.el8                   baseos            45 k
+ ipset-libs                       x86_64           7.1-1.el8                   baseos            71 k
+ iptables                         x86_64           1.8.5-11.el8                baseos           671 k
+ iptables-ebtables                x86_64           1.8.5-11.el8                baseos            74 k
+ iptables-libs                    x86_64           1.8.5-11.el8                baseos           103 k
+ jansson                          x86_64           2.14-1.el8                  baseos            47 k
+ libibverbs                       x86_64           48.0-1.el8                  baseos           414 k
+ libmnl                           x86_64           1.0.4-6.el8                 baseos            30 k
+ libnetfilter_conntrack           x86_64           1.0.6-5.el8                 baseos            65 k
+ libnfnetlink                     x86_64           1.0.1-13.el8                baseos            33 k
+ libnftnl                         x86_64           1.2.2-3.el8                 baseos            87 k
+ libpcap                          x86_64           14:1.9.1-5.el8              baseos           169 k
+ nftables                         x86_64           1:1.0.4-4.el8               baseos           382 k
+ python3-firewall                 noarch           0.9.11-4.el8                baseos           472 k
+ python3-libselinux               x86_64           2.9-8.el8                   baseos           283 k
+ python3-nftables                 x86_64           1:1.0.4-4.el8               baseos            31 k
+ python3-slip                     noarch           0.6.4-13.el8                baseos            39 k
+ python3-slip-dbus                noarch           0.6.4-13.el8                baseos            39 k
+
+Transaction Summary
+======================================================================================================
+Install  20 Packages
+
+Total download size: 3.6 M
+Installed size: 10 M
+Downloading Packages:
+(1/20): firewalld-filesystem-0.9.11-4.el8.noarch.rpm                  564 kB/s |  78 kB     00:00    
+(2/20): ipset-7.1-1.el8.x86_64.rpm                                    284 kB/s |  45 kB     00:00    
+(3/20): ipset-libs-7.1-1.el8.x86_64.rpm                               1.5 MB/s |  71 kB     00:00    
+(4/20): iptables-ebtables-1.8.5-11.el8.x86_64.rpm                     2.7 MB/s |  74 kB     00:00    
+(5/20): firewalld-0.9.11-4.el8.noarch.rpm                             2.4 MB/s | 580 kB     00:00    
+(6/20): iptables-libs-1.8.5-11.el8.x86_64.rpm                         4.5 MB/s | 103 kB     00:00    
+(7/20): jansson-2.14-1.el8.x86_64.rpm                                 1.9 MB/s |  47 kB     00:00    
+(8/20): libmnl-1.0.4-6.el8.x86_64.rpm                                 1.3 MB/s |  30 kB     00:00    
+(9/20): libibverbs-48.0-1.el8.x86_64.rpm                              6.3 MB/s | 414 kB     00:00    
+(10/20): iptables-1.8.5-11.el8.x86_64.rpm                             4.5 MB/s | 671 kB     00:00    
+(11/20): libnetfilter_conntrack-1.0.6-5.el8.x86_64.rpm                2.3 MB/s |  65 kB     00:00    
+(12/20): libnfnetlink-1.0.1-13.el8.x86_64.rpm                         1.5 MB/s |  33 kB     00:00    
+(13/20): libnftnl-1.2.2-3.el8.x86_64.rpm                              3.5 MB/s |  87 kB     00:00    
+(14/20): libpcap-1.9.1-5.el8.x86_64.rpm                               6.6 MB/s | 169 kB     00:00    
+(15/20): nftables-1.0.4-4.el8.x86_64.rpm                               15 MB/s | 382 kB     00:00    
+(16/20): python3-firewall-0.9.11-4.el8.noarch.rpm                      17 MB/s | 472 kB     00:00    
+(17/20): python3-libselinux-2.9-8.el8.x86_64.rpm                      8.6 MB/s | 283 kB     00:00    
+(18/20): python3-nftables-1.0.4-4.el8.x86_64.rpm                      1.4 MB/s |  31 kB     00:00    
+(19/20): python3-slip-0.6.4-13.el8.noarch.rpm                         1.6 MB/s |  39 kB     00:00    
+(20/20): python3-slip-dbus-0.6.4-13.el8.noarch.rpm                    1.6 MB/s |  39 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 5.5 MB/s | 3.6 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : libmnl-1.0.4-6.el8.x86_64                                                   1/20 
+  Running scriptlet: libmnl-1.0.4-6.el8.x86_64                                                   1/20 
+  Installing       : libnftnl-1.2.2-3.el8.x86_64                                                 2/20 
+  Running scriptlet: libnftnl-1.2.2-3.el8.x86_64                                                 2/20 
+  Installing       : libnfnetlink-1.0.1-13.el8.x86_64                                            3/20 
+  Running scriptlet: libnfnetlink-1.0.1-13.el8.x86_64                                            3/20 
+  Installing       : libnetfilter_conntrack-1.0.6-5.el8.x86_64                                   4/20 
+  Running scriptlet: libnetfilter_conntrack-1.0.6-5.el8.x86_64                                   4/20 
+  Installing       : ipset-libs-7.1-1.el8.x86_64                                                 5/20 
+  Running scriptlet: ipset-libs-7.1-1.el8.x86_64                                                 5/20 
+  Installing       : ipset-7.1-1.el8.x86_64                                                      6/20 
+  Installing       : python3-libselinux-2.9-8.el8.x86_64                                         7/20 
+  Installing       : python3-slip-0.6.4-13.el8.noarch                                            8/20 
+  Installing       : python3-slip-dbus-0.6.4-13.el8.noarch                                       9/20 
+  Installing       : libibverbs-48.0-1.el8.x86_64                                               10/20 
+  Installing       : libpcap-14:1.9.1-5.el8.x86_64                                              11/20 
+  Installing       : iptables-libs-1.8.5-11.el8.x86_64                                          12/20 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Installing       : iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Installing       : iptables-ebtables-1.8.5-11.el8.x86_64                                      14/20 
+  Running scriptlet: iptables-ebtables-1.8.5-11.el8.x86_64                                      14/20 
+  Installing       : jansson-2.14-1.el8.x86_64                                                  15/20 
+  Installing       : nftables-1:1.0.4-4.el8.x86_64                                              16/20 
+  Running scriptlet: nftables-1:1.0.4-4.el8.x86_64                                              16/20 
+  Installing       : python3-nftables-1:1.0.4-4.el8.x86_64                                      17/20 
+  Installing       : python3-firewall-0.9.11-4.el8.noarch                                       18/20 
+  Installing       : firewalld-filesystem-0.9.11-4.el8.noarch                                   19/20 
+  Installing       : firewalld-0.9.11-4.el8.noarch                                              20/20 
+  Running scriptlet: firewalld-0.9.11-4.el8.noarch                                              20/20 
+  Verifying        : firewalld-0.9.11-4.el8.noarch                                               1/20 
+  Verifying        : firewalld-filesystem-0.9.11-4.el8.noarch                                    2/20 
+  Verifying        : ipset-7.1-1.el8.x86_64                                                      3/20 
+  Verifying        : ipset-libs-7.1-1.el8.x86_64                                                 4/20 
+  Verifying        : iptables-1.8.5-11.el8.x86_64                                                5/20 
+  Verifying        : iptables-ebtables-1.8.5-11.el8.x86_64                                       6/20 
+  Verifying        : iptables-libs-1.8.5-11.el8.x86_64                                           7/20 
+  Verifying        : jansson-2.14-1.el8.x86_64                                                   8/20 
+  Verifying        : libibverbs-48.0-1.el8.x86_64                                                9/20 
+  Verifying        : libmnl-1.0.4-6.el8.x86_64                                                  10/20 
+  Verifying        : libnetfilter_conntrack-1.0.6-5.el8.x86_64                                  11/20 
+  Verifying        : libnfnetlink-1.0.1-13.el8.x86_64                                           12/20 
+  Verifying        : libnftnl-1.2.2-3.el8.x86_64                                                13/20 
+  Verifying        : libpcap-14:1.9.1-5.el8.x86_64                                              14/20 
+  Verifying        : nftables-1:1.0.4-4.el8.x86_64                                              15/20 
+  Verifying        : python3-firewall-0.9.11-4.el8.noarch                                       16/20 
+  Verifying        : python3-libselinux-2.9-8.el8.x86_64                                        17/20 
+  Verifying        : python3-nftables-1:1.0.4-4.el8.x86_64                                      18/20 
+  Verifying        : python3-slip-0.6.4-13.el8.noarch                                           19/20 
+  Verifying        : python3-slip-dbus-0.6.4-13.el8.noarch                                      20/20 
+Installed products updated.
+
+Installed:
+  firewalld-0.9.11-4.el8.noarch                      firewalld-filesystem-0.9.11-4.el8.noarch         
+  ipset-7.1-1.el8.x86_64                             ipset-libs-7.1-1.el8.x86_64                      
+  iptables-1.8.5-11.el8.x86_64                       iptables-ebtables-1.8.5-11.el8.x86_64            
+  iptables-libs-1.8.5-11.el8.x86_64                  jansson-2.14-1.el8.x86_64                        
+  libibverbs-48.0-1.el8.x86_64                       libmnl-1.0.4-6.el8.x86_64                        
+  libnetfilter_conntrack-1.0.6-5.el8.x86_64          libnfnetlink-1.0.1-13.el8.x86_64                 
+  libnftnl-1.2.2-3.el8.x86_64                        libpcap-14:1.9.1-5.el8.x86_64                    
+  nftables-1:1.0.4-4.el8.x86_64                      python3-firewall-0.9.11-4.el8.noarch             
+  python3-libselinux-2.9-8.el8.x86_64                python3-nftables-1:1.0.4-4.el8.x86_64            
+  python3-slip-0.6.4-13.el8.noarch                   python3-slip-dbus-0.6.4-13.el8.noarch            
+
+Complete!
+[root@stapp02 ~]# systemctl start firewalld && systemctl enable firewalld && systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sat 2024-03-30 16:32:05 UTC; 430ms ago
+     Docs: man:firewalld(1)
+ Main PID: 1500 (firewalld)
+    Tasks: 1 (limit: 1340692)
+   Memory: 36.0M
+   CGroup: /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d26f3110c522f2290/system.slice/firew
+alld.service
+           └─1500 /usr/libexec/platform-python -s /usr/sbin/firewalld --nofork --nopid
+
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: Starting firewalld - dynamic firewall daem
+on...
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1500]: firewalld.servi
+ce: Executing: /usr/sbin/firewalld --nofork --nopid
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ D-Bus name org.fedoraproject.FirewallD1 now registered by :1.54
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed start -> running
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Job firewalld.service/start finished, result=done
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: Started firewalld - dynamic firewall daemo
+n.
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to send unit change signal for firewalld.service: Connection reset by peer
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com firewalld[1500]: WARNING: Allo
+wZoneDrifting is enabled. This is considered an insecure configuration option. It will be removed in a
+ future release. Please consider disabling it now.
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed dead -> running
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to set invocation ID on control group /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d
+26f3110c522f2290/system.slice/firewalld.service, ignoring: Operation not permitted
+[root@stapp02 ~]# firewall-cmd --permanent --zone=public --add-port=80/tcp
+success
+[root@stapp02 ~]# firewall-cmd --permanent --zone=public --add-service={http,https}
+success
+[root@stapp02 ~]# firewall-cmd --permanent --zone=public --remove-port=8080/tcp
+Warning: NOT_ENABLED: 8080:tcp
+success
+[root@stapp02 ~]# firewall-cmd --reload
+success
+[root@stapp02 ~]# systemctl start firewalld && systemctl enable firewalld && systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sat 2024-03-30 16:32:05 UTC; 1min 40s ago
+     Docs: man:firewalld(1)
+ Main PID: 1500 (firewalld)
+    Tasks: 2 (limit: 1340692)
+   Memory: 41.5M
+   CGroup: /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d26f3110c522f2290/system.slice/firew
+alld.service
+           └─1500 /usr/libexec/platform-python -s /usr/sbin/firewalld --nofork --nopid
+
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed dead -> running
+Mar 30 16:32:05 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to set invocation ID on control group /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d
+26f3110c522f2290/system.slice/firewalld.service, ignoring: Operation not permitted
+Mar 30 16:32:52 stapp02.stratos.xfusioncorp.com firewalld[1500]: WARNING: NOT_
+ENABLED: 8080:tcp
+Mar 30 16:33:35 stapp02.stratos.xfusioncorp.com firewalld[1500]: WARNING: Allo
+wZoneDrifting is enabled. This is considered an insecure configuration option. It will be removed in a
+ future release. Please consider disabling it now.
+Mar 30 16:33:44 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Trying to enqueue job firewalld.service/start/replace
+Mar 30 16:33:44 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Installed new job firewalld.service/start as 188
+Mar 30 16:33:44 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Enqueued job firewalld.service/start as 188
+Mar 30 16:33:44 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Job firewalld.service/start finished, result=done
+Mar 30 16:33:45 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed dead -> running
+Mar 30 16:33:45 stapp02.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to set invocation ID on control group /docker/98ec87fc92d35f094a4c72d691fc6e5cb581068843689c5d
+
+[root@stapp02 ~]# logout
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02 closed.
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:mAeiiv1KQbMmMSK5/XlSSWCyCJCtPKRaVQCuaxZf9ug.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# systemctl status httpd &&  systemctl status nginx
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-03-30 15:57:04 UTC; 37min ago
+     Docs: man:httpd.service(8)
+ Main PID: 570 (httpd)
+   Status: "Running, listening on: port 8080"
+    Tasks: 213 (limit: 1340692)
+   Memory: 22.0M
+   CGroup: /docker/a275cd71231c3c1fa236a1f80a774da45086301464d0034d779253a952a24e24/system.slice/httpd
+.service
+           ├─570 /usr/sbin/httpd -DFOREGROUND
+           ├─592 /usr/sbin/httpd -DFOREGROUND
+           ├─595 /usr/sbin/httpd -DFOREGROUND
+           ├─596 /usr/sbin/httpd -DFOREGROUND
+           └─600 /usr/sbin/httpd -DFOREGROUND
+
+Mar 30 16:33:25 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:33:35 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:33:45 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:33:55 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:34:05 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:34:15 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:34:25 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:34:35 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 570 (READY=1, STATUS=Running, listening on: port 8080)
+Mar 30 16:34:45 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+
+[root@stapp03 ~]# grep -i Listen /etc/httpd/conf/ht*  /etc/nginx/nginx.conf
+/etc/httpd/conf/httpd.conf:# Listen: Allows you to bind Apache to specific IP addresses and/or
+/etc/httpd/conf/httpd.conf:# Change this to Listen on specific IP addresses as shown below to 
+/etc/httpd/conf/httpd.conf:#Listen 12.34.56.78:80
+/etc/httpd/conf/httpd.conf:Listen 8080
+/etc/nginx/nginx.conf:        listen       80 default_server;
+/etc/nginx/nginx.conf:        listen       [::]:80 default_server;
+/etc/nginx/nginx.conf:#        listen       443 ssl http2 default_server;
+/etc/nginx/nginx.conf:#        listen       [::]:443 ssl http2 default_server;
+[root@stapp03 ~]# yum install -y firewalld
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                           7.8 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            26 MB/s |  28 MB     00:01    
+CentOS Stream 8 - BaseOS                                               12 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                              7.6 MB/s |  10 MB     00:01    
+CentOS Stream 8 - Extras                                               10 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               13 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               28 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        1.3 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                     7.9 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             415 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                          Architecture     Version                     Repository        Size
+======================================================================================================
+Installing:
+ firewalld                        noarch           0.9.11-4.el8                baseos           580 k
+Installing dependencies:
+ firewalld-filesystem             noarch           0.9.11-4.el8                baseos            78 k
+ ipset                            x86_64           7.1-1.el8                   baseos            45 k
+ ipset-libs                       x86_64           7.1-1.el8                   baseos            71 k
+ iptables                         x86_64           1.8.5-11.el8                baseos           671 k
+ iptables-ebtables                x86_64           1.8.5-11.el8                baseos            74 k
+ iptables-libs                    x86_64           1.8.5-11.el8                baseos           103 k
+ jansson                          x86_64           2.14-1.el8                  baseos            47 k
+ libibverbs                       x86_64           48.0-1.el8                  baseos           414 k
+ libmnl                           x86_64           1.0.4-6.el8                 baseos            30 k
+ libnetfilter_conntrack           x86_64           1.0.6-5.el8                 baseos            65 k
+ libnfnetlink                     x86_64           1.0.1-13.el8                baseos            33 k
+ libnftnl                         x86_64           1.2.2-3.el8                 baseos            87 k
+ libpcap                          x86_64           14:1.9.1-5.el8              baseos           169 k
+ nftables                         x86_64           1:1.0.4-4.el8               baseos           382 k
+ python3-firewall                 noarch           0.9.11-4.el8                baseos           472 k
+ python3-libselinux               x86_64           2.9-8.el8                   baseos           283 k
+ python3-nftables                 x86_64           1:1.0.4-4.el8               baseos            31 k
+ python3-slip                     noarch           0.6.4-13.el8                baseos            39 k
+ python3-slip-dbus                noarch           0.6.4-13.el8                baseos            39 k
+
+Transaction Summary
+======================================================================================================
+Install  20 Packages
+
+Total download size: 3.6 M
+Installed size: 10 M
+Downloading Packages:
+(1/20): ipset-7.1-1.el8.x86_64.rpm                                    547 kB/s |  45 kB     00:00    
+(2/20): firewalld-filesystem-0.9.11-4.el8.noarch.rpm                  872 kB/s |  78 kB     00:00    
+(3/20): ipset-libs-7.1-1.el8.x86_64.rpm                               1.7 MB/s |  71 kB     00:00    
+(4/20): iptables-ebtables-1.8.5-11.el8.x86_64.rpm                     3.1 MB/s |  74 kB     00:00    
+(5/20): firewalld-0.9.11-4.el8.noarch.rpm                             3.6 MB/s | 580 kB     00:00    
+(6/20): iptables-libs-1.8.5-11.el8.x86_64.rpm                         4.5 MB/s | 103 kB     00:00    
+(7/20): iptables-1.8.5-11.el8.x86_64.rpm                              7.1 MB/s | 671 kB     00:00    
+(8/20): jansson-2.14-1.el8.x86_64.rpm                                 1.7 MB/s |  47 kB     00:00    
+(9/20): libmnl-1.0.4-6.el8.x86_64.rpm                                 1.3 MB/s |  30 kB     00:00    
+(10/20): libnetfilter_conntrack-1.0.6-5.el8.x86_64.rpm                2.6 MB/s |  65 kB     00:00    
+(11/20): libnfnetlink-1.0.1-13.el8.x86_64.rpm                         1.4 MB/s |  33 kB     00:00    
+(12/20): libnftnl-1.2.2-3.el8.x86_64.rpm                              3.5 MB/s |  87 kB     00:00    
+(13/20): libibverbs-48.0-1.el8.x86_64.rpm                             6.1 MB/s | 414 kB     00:00    
+(14/20): libpcap-1.9.1-5.el8.x86_64.rpm                               6.7 MB/s | 169 kB     00:00    
+(15/20): nftables-1.0.4-4.el8.x86_64.rpm                               14 MB/s | 382 kB     00:00    
+(16/20): python3-firewall-0.9.11-4.el8.noarch.rpm                      16 MB/s | 472 kB     00:00    
+(17/20): python3-libselinux-2.9-8.el8.x86_64.rpm                       11 MB/s | 283 kB     00:00    
+(18/20): python3-nftables-1.0.4-4.el8.x86_64.rpm                      1.3 MB/s |  31 kB     00:00    
+(19/20): python3-slip-0.6.4-13.el8.noarch.rpm                         1.7 MB/s |  39 kB     00:00    
+(20/20): python3-slip-dbus-0.6.4-13.el8.noarch.rpm                    1.6 MB/s |  39 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 7.0 MB/s | 3.6 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : libmnl-1.0.4-6.el8.x86_64                                                   1/20 
+  Running scriptlet: libmnl-1.0.4-6.el8.x86_64                                                   1/20 
+  Installing       : libnftnl-1.2.2-3.el8.x86_64                                                 2/20 
+  Running scriptlet: libnftnl-1.2.2-3.el8.x86_64                                                 2/20 
+  Installing       : libnfnetlink-1.0.1-13.el8.x86_64                                            3/20 
+  Running scriptlet: libnfnetlink-1.0.1-13.el8.x86_64                                            3/20 
+  Installing       : libnetfilter_conntrack-1.0.6-5.el8.x86_64                                   4/20 
+  Running scriptlet: libnetfilter_conntrack-1.0.6-5.el8.x86_64                                   4/20 
+  Installing       : ipset-libs-7.1-1.el8.x86_64                                                 5/20 
+  Running scriptlet: ipset-libs-7.1-1.el8.x86_64                                                 5/20 
+  Installing       : ipset-7.1-1.el8.x86_64                                                      6/20 
+  Installing       : python3-libselinux-2.9-8.el8.x86_64                                         7/20 
+  Installing       : python3-slip-0.6.4-13.el8.noarch                                            8/20 
+  Installing       : python3-slip-dbus-0.6.4-13.el8.noarch                                       9/20 
+  Installing       : libibverbs-48.0-1.el8.x86_64                                               10/20 
+  Installing       : libpcap-14:1.9.1-5.el8.x86_64                                              11/20 
+  Installing       : iptables-libs-1.8.5-11.el8.x86_64                                          12/20 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Installing       : iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                               13/20 
+  Installing       : iptables-ebtables-1.8.5-11.el8.x86_64                                      14/20 
+  Running scriptlet: iptables-ebtables-1.8.5-11.el8.x86_64                                      14/20 
+  Installing       : jansson-2.14-1.el8.x86_64                                                  15/20 
+  Installing       : nftables-1:1.0.4-4.el8.x86_64                                              16/20 
+  Running scriptlet: nftables-1:1.0.4-4.el8.x86_64                                              16/20 
+  Installing       : python3-nftables-1:1.0.4-4.el8.x86_64                                      17/20 
+  Installing       : python3-firewall-0.9.11-4.el8.noarch                                       18/20 
+  Installing       : firewalld-filesystem-0.9.11-4.el8.noarch                                   19/20 
+  Installing       : firewalld-0.9.11-4.el8.noarch                                              20/20 
+  Running scriptlet: firewalld-0.9.11-4.el8.noarch                                              20/20 
+  Verifying        : firewalld-0.9.11-4.el8.noarch                                               1/20 
+  Verifying        : firewalld-filesystem-0.9.11-4.el8.noarch                                    2/20 
+  Verifying        : ipset-7.1-1.el8.x86_64                                                      3/20 
+  Verifying        : ipset-libs-7.1-1.el8.x86_64                                                 4/20 
+  Verifying        : iptables-1.8.5-11.el8.x86_64                                                5/20 
+  Verifying        : iptables-ebtables-1.8.5-11.el8.x86_64                                       6/20 
+  Verifying        : iptables-libs-1.8.5-11.el8.x86_64                                           7/20 
+  Verifying        : jansson-2.14-1.el8.x86_64                                                   8/20 
+  Verifying        : libibverbs-48.0-1.el8.x86_64                                                9/20 
+  Verifying        : libmnl-1.0.4-6.el8.x86_64                                                  10/20 
+  Verifying        : libnetfilter_conntrack-1.0.6-5.el8.x86_64                                  11/20 
+  Verifying        : libnfnetlink-1.0.1-13.el8.x86_64                                           12/20 
+  Verifying        : libnftnl-1.2.2-3.el8.x86_64                                                13/20 
+  Verifying        : libpcap-14:1.9.1-5.el8.x86_64                                              14/20 
+  Verifying        : nftables-1:1.0.4-4.el8.x86_64                                              15/20 
+  Verifying        : python3-firewall-0.9.11-4.el8.noarch                                       16/20 
+  Verifying        : python3-libselinux-2.9-8.el8.x86_64                                        17/20 
+  Verifying        : python3-nftables-1:1.0.4-4.el8.x86_64                                      18/20 
+  Verifying        : python3-slip-0.6.4-13.el8.noarch                                           19/20 
+  Verifying        : python3-slip-dbus-0.6.4-13.el8.noarch                                      20/20 
+Installed products updated.
+
+Installed:
+  firewalld-0.9.11-4.el8.noarch                      firewalld-filesystem-0.9.11-4.el8.noarch         
+  ipset-7.1-1.el8.x86_64                             ipset-libs-7.1-1.el8.x86_64                      
+  iptables-1.8.5-11.el8.x86_64                       iptables-ebtables-1.8.5-11.el8.x86_64            
+  iptables-libs-1.8.5-11.el8.x86_64                  jansson-2.14-1.el8.x86_64                        
+  libibverbs-48.0-1.el8.x86_64                       libmnl-1.0.4-6.el8.x86_64                        
+  libnetfilter_conntrack-1.0.6-5.el8.x86_64          libnfnetlink-1.0.1-13.el8.x86_64                 
+  libnftnl-1.2.2-3.el8.x86_64                        libpcap-14:1.9.1-5.el8.x86_64                    
+  nftables-1:1.0.4-4.el8.x86_64                      python3-firewall-0.9.11-4.el8.noarch             
+  python3-libselinux-2.9-8.el8.x86_64                python3-nftables-1:1.0.4-4.el8.x86_64            
+  python3-slip-0.6.4-13.el8.noarch                   python3-slip-dbus-0.6.4-13.el8.noarch            
+
+Complete!
+[root@stapp03 ~]# systemctl start firewalld && systemctl enable firewalld && systemctl status firewalld
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sat 2024-03-30 16:36:12 UTC; 397ms ago
+     Docs: man:firewalld(1)
+ Main PID: 1411 (firewalld)
+    Tasks: 1 (limit: 1340692)
+   Memory: 35.5M
+   CGroup: /docker/a275cd71231c3c1fa236a1f80a774da45086301464d0034d779253a952a24e24/system.slice/firew
+alld.service
+           └─1411 /usr/libexec/platform-python -s /usr/sbin/firewalld --nofork --nopid
+
+Mar 30 16:36:11 stapp03.stratos.xfusioncorp.com systemd[1]: Starting firewalld - dynamic firewall daem
+on...
+Mar 30 16:36:11 stapp03.stratos.xfusioncorp.com systemd[1411]: firewalld.servi
+ce: Executing: /usr/sbin/firewalld --nofork --nopid
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ D-Bus name org.fedoraproject.FirewallD1 now registered by :1.47
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed start -> running
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Job firewalld.service/start finished, result=done
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: Started firewalld - dynamic firewall daemo
+n.
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to send unit change signal for firewalld.service: Connection reset by peer
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com firewalld[1411]: WARNING: Allo
+wZoneDrifting is enabled. This is considered an insecure configuration option. It will be removed in a
+ future release. Please consider disabling it now.
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Changed dead -> running
+Mar 30 16:36:12 stapp03.stratos.xfusioncorp.com systemd[1]: firewalld.service:
+ Failed to set invocation ID on control group /docker/a275cd71231c3c1fa236a1f80a774da45086301464d0034d
+779253a952a24e24/system.slice/firewalld.service, ignoring: Operation not permitted
+[root@stapp03 ~]# firewall-cmd --permanent --zone=public --add-port=80/tcp
+success
+[root@stapp03 ~]# firewall-cmd --permanent --zone=public --remove-port=8080/tcp
+Warning: NOT_ENABLED: 8080:tcp
+success
+[root@stapp03 ~]# firewall-cmd --permanent --zone=public --add-service={http,https}
+success
+[root@stapp03 ~]# firewall-cmd --reload
+success
+[root@stapp03 ~]#
