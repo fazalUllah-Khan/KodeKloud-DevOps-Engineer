@@ -1,0 +1,34 @@
+The system admins team of xFusionCorp Industries has noticed intermittent issues with DNS resolution in several apps . App Server 3 in Stratos Datacenter is having some DNS resolution issues, so we want to add some additional DNS nameservers on this server.
+
+
+As a temporary fix we have decided to go with Google public DNS (ipv4). Please make appropriate changes on this server.
+
+
+# Solution
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:SySamszyWhhLGFiybhGBqfrr8g55wS/3e37ZpBOvICs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# cat /etc/resolv.conf
+search stratos.xfusioncorp.com
+nameserver 127.0.0.11
+options ndots:0
+[root@stapp03 ~]# vi /etc/resolv.conf
+[root@stapp03 ~]# cat /etc/resolv.conf
+search stratos.xfusioncorp.com
+nameserver 127.0.0.11
+nameserver 8.8.8.8
+options ndots:0
+[root@stapp03 ~]# 
