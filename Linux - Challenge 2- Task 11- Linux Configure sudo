@@ -1,0 +1,173 @@
+We have some users on all app servers in Stratos Datacenter. Some of them have been assigned some new roles and responsibilities, therefore their users need to be upgraded with sudo access so that they can perform admin level tasks.
+
+
+a. Provide sudo access to user siva on all app servers.
+
+b. Make sure you have set up password-less sudo for the user.
+
+# Solution
+
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:ccklJBjsofgtQArY3boTThyQ0djd9NGCCperCRLhzjA.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# id siva
+uid=1002(siva) gid=1002(siva) groups=1002(siva)
+[root@stapp01 ~]# su - siva
+[siva@stapp01 ~]$ sudo cat /etc/sudoers |grep siva
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+sudo: 3 incorrect password attempts
+[siva@stapp01 ~]$ su sudo
+su: user sudo does not exist
+[siva@stapp01 ~]$ sudo - su
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+sudo: 2 incorrect password attempts
+[siva@stapp01 ~]$ exit
+logout
+[root@stapp01 ~]# visudo
+[root@stapp01 ~]# su - siva
+Last login: Sat Mar 30 15:29:55 UTC 2024 on pts/0
+[siva@stapp01 ~]$ sudo cat /etc/sudoers |grep siva
+siva    ALL=(ALL)   NOPASSWD:ALL
+[siva@stapp01 ~]$ logout
+[root@stapp01 ~]# logout
+[tony@stapp01 ~]$ exit
+logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:T6YFAZ079jyr8jgRKw7R4t7IxlGX3jh5R1+JbwO4KyM.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# id siva
+uid=1002(siva) gid=1002(siva) groups=1002(siva)
+[root@stapp02 ~]# su - siva
+[siva@stapp02 ~]$ sudo cat /etc/sudoers |grep siva
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+sudo: 1 incorrect password attempt
+
+[siva@stapp02 ~]$ logout
+[root@stapp02 ~]# visudo
+[root@stapp02 ~]# catsudo
+-bash: catsudo: command not found
+[root@stapp02 ~]# su - siva
+Last login: Sat Mar 30 15:40:05 UTC 2024 on pts/0
+[siva@stapp02 ~]$ sudo cat /etc/sudoers |grep siva
+siva    ALL=(ALL)   NOPASSWD:ALL
+[siva@stapp02 ~]$ logout
+[root@stapp02 ~]# exit
+logout
+[steve@stapp02 ~]$ exit
+logout
+Connection to stapp02 closed.
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:7QxKXPyfCiHnU2QE8yAAf74wLpbH/mfBllr4/AvP79s.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+Permission denied, please try again.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# id siva
+uid=1002(siva) gid=1002(siva) groups=1002(siva)
+[root@stapp03 ~]# sudo su -siva
+su: failed to execute iva: No such file or directory
+[root@stapp03 ~]# su - siva
+[siva@stapp03 ~]$ sudo cat /etc/sudoers |grep siva
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for siva: 
+
+[siva@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for siva: 
+Sorry, try again.
+[sudo] password for siva: 
+sudo: 1 incorrect password attempt
+[siva@stapp03 ~]$ logout
+[root@stapp03 ~]# visudo
+[root@stapp03 ~]# su - siva
+Last login: Sat Mar 30 15:44:31 UTC 2024 on pts/0
+[siva@stapp03 ~]$ sudo cat /etc/sudoers |grep siva
+siva   ALL=(ALL)   NOPASSWD:ALL
+[siva@stapp03 ~]$ 
