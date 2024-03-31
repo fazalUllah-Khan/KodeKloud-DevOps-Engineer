@@ -1,0 +1,297 @@
+There is a static website running in Stratos Datacenter. They have already configured the app servers and code is already deployed there. To make it work properly, they need to configure LBR server. There are number of options for that, but team has decided to go with HAproxy. FYI, apache is running on port 5003 on all app servers. Complete this task as per below details.
+
+
+a. Install and configure HAproxy on LBR server using yum only and make sure all app servers are added to HAproxy load balancer. HAproxy must serve on default http port (Note: Please do not remove stats socket /var/lib/haproxy/stats entry from haproxy default config.).
+
+b. Once done, you can access the website using StaticApp button on the top bar.
+
+# Solution:
+************** Summary run below command on enach server stapp01,stapp02,stapp03 ********************* 
+1. ssh steve@stapp02
+2. sudo su -
+3. cat /etc/httpd/conf/httpd.conf |grep Listen --> verify http listening port
+4. systemctl enable httpd
+5. systemctl start httpd
+6. systemctl status httpd
+7. curl localhost:8083 
+
+**************** Config haproxy sever *******************************
+1. ssh loki@stlb01
+2. sudo su -
+3. yum install haproxy -y
+4. cat /etc/haproxy/haproxy.cfg |grep haproxy/stats
+5. vi /etc/haproxy/haproxy.cfg --> update fronend port (i.e default 80) & update backend servers i.e Ip and port for stapp01,stapp02,stapp03
+6. haproxy -f /etc/haproxy/haproxy.cfg
+7. systemctl enable haproxy && systemctl start haproxy && systemctl status haproxy
+8. curl 172.16.238.14:80 , curl 172.16.238.10:8083, curl 172.16.238.11:8083, curl 172.16.238.12:8083
+
+### Stapp server 02 logs (do same on all other two)
+Last login: Sun Mar 31 00:21:10 UTC 2024 on pts/0
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:GyxlzG3Dgu52CeDY0vpwH74eqFCJfGYFgNDcFRRc7ug.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 8083
+[root@stapp02 ~]# systemctl enable httpd
+Created symlink /etc/systemd/system/multi-user.target.wants/httpd.service → /usr/lib/systemd/system/httpd.service.
+[root@stapp02 ~]# systemctl start httpd
+[root@stapp02 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sun 2024-03-31 00:21:02 UTC; 7min ago
+     Docs: man:httpd.service(8)
+ Main PID: 922 (httpd)
+   Status: "Running, listening on: port 8083"
+    Tasks: 212 (limit: 1340692)
+   Memory: 24.2M
+   CGroup: /docker/68e61735945e371bee345394d28d27eb1f21c6313fe13c40df56134be492dfce/system.slice/http>
+           ├─922 /usr/sbin/httpd -DFOREGROUND
+           ├─935 /usr/sbin/httpd -DFOREGROUND
+           ├─936 /usr/sbin/httpd -DFOREGROUND
+           ├─937 /usr/sbin/httpd -DFOREGROUND
+           └─938 /usr/sbin/httpd -DFOREGROUND
+
+Mar 31 00:27:55 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed dead -> running
+Mar 31 00:27:55 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to set blkio.weight>
+Mar 31 00:27:55 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to set blkio.bfq.we>
+Mar 31 00:27:55 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to reset devices.li>
+Mar 31 00:27:55 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to set invocation I>
+Mar 31 00:28:02 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+Mar 31 00:28:02 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Trying to enqueue job http>
+Mar 31 00:28:02 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job httpd.se>
+Mar 31 00:28:02 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Enqueued job httpd.service>
+Mar 31 00:28:02 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service/start fi>
+
+[root@stapp02 ~]# curl localhost:8083
+Welcome to xFusionCorp Industries!
+[root@stapp02 ~]#
+
+#####   Haproxy excution logs:
+Last login: Sun Mar 31 00:28:56 UTC 2024 on pts/4
+thor@jump_host ~$ ssh loki@stlb01
+The authenticity of host 'stlb01 (172.16.238.14)' can't be established.
+ECDSA key fingerprint is SHA256:f9v9oKfhOgWtMO6H5MF2JCUqv36NbAsUlfyYXhQXgfA.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stlb01,172.16.238.14' (ECDSA) to the list of known hosts.
+loki@stlb01's password: 
+[loki@stlb01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for loki: 
+[root@stlb01 ~]# yum install haproxy -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            26 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            46 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                               28 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                               16 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                               16 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               25 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               25 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        2.3 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      17 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             714 kB/s | 103 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package               Architecture         Version                     Repository               Size
+======================================================================================================
+Installing:
+ haproxy               x86_64               1.8.27-5.el8                appstream               1.4 M
+
+Transaction Summary
+======================================================================================================
+Install  1 Package
+
+Total download size: 1.4 M
+Installed size: 4.2 M
+Downloading Packages:
+haproxy-1.8.27-5.el8.x86_64.rpm                                       6.5 MB/s | 1.4 MB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 5.3 MB/s | 1.4 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Running scriptlet: haproxy-1.8.27-5.el8.x86_64                                                  1/1 
+  Installing       : haproxy-1.8.27-5.el8.x86_64                                                  1/1 
+  Running scriptlet: haproxy-1.8.27-5.el8.x86_64                                                  1/1 
+  Verifying        : haproxy-1.8.27-5.el8.x86_64                                                  1/1 
+Installed products updated.
+
+Installed:
+  haproxy-1.8.27-5.el8.x86_64                                                                         
+
+Complete!
+[root@stlb01 ~]# cat /etc/haproxy/haproxy.cfg |grep haproxy/stats
+    stats socket /var/lib/haproxy/stats
+[root@stlb01 ~]# vi /etc/haproxy/haproxy.cfg
+[root@stlb01 ~]# cat /etc/haproxy/haproxy.cfg
+#---------------------------------------------------------------------
+# Example configuration for a possible web application.  See the
+# full configuration options online.
+#
+#   https://www.haproxy.org/download/1.8/doc/configuration.txt
+#
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    # to have these messages end up in /var/log/haproxy.log you will
+    # need to:
+    #
+    # 1) configure syslog to accept network log events.  This is done
+    #    by adding the '-r' option to the SYSLOGD_OPTIONS in
+    #    /etc/sysconfig/syslog
+    #
+    # 2) configure local2 events to go to the /var/log/haproxy.log
+    #   file. A line like the following can be added to
+    #   /etc/sysconfig/syslog
+    #
+    #    local2.*                       /var/log/haproxy.log
+    #
+    log         127.0.0.1 local2
+
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+    # utilize system-wide crypto-policies
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-server-ciphers PROFILE=SYSTEM
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+#---------------------------------------------------------------------
+# main frontend which proxys to the backends
+#---------------------------------------------------------------------
+frontend main
+    bind *:80
+    acl url_static       path_beg       -i /static /images /javascript /stylesheets
+    acl url_static       path_end       -i .jpg .gif .png .css .js
+
+    use_backend static          if url_static
+    default_backend             app
+
+#---------------------------------------------------------------------
+# static backend for serving up images, stylesheets and such
+#---------------------------------------------------------------------
+backend static
+    balance     roundrobin
+    server      static 127.0.0.1:4331 check
+
+#---------------------------------------------------------------------
+# round robin balancing between the various backends
+#---------------------------------------------------------------------
+backend app
+    balance     roundrobin
+    server  stapp01 172.16.238.10:8083 check
+    server  stapp02 172.16.238.11:8083 check
+    server  stapp03 172.16.238.12:8083 check
+   
+[root@stlb01 ~]# haproxy -f /etc/haproxy/haproxy.cfg
+[root@stlb01 ~]# systemctl enable haproxy
+Created symlink /etc/systemd/system/multi-user.target.wants/haproxy.service → /usr/lib/systemd/system/haproxy.service.
+[root@stlb01 ~]# systemctl start haproxy
+[root@stlb01 ~]# systemctl status haproxy
+● haproxy.service - HAProxy Load Balancer
+   Loaded: loaded (/usr/lib/systemd/system/haproxy.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sun 2024-03-31 00:38:37 UTC; 5s ago
+  Process: 1044 ExecStartPre=/usr/sbin/haproxy -f $CONFIG -f $CFGDIR -c -q $OPTIONS (code=exited, stat
+us=0/SUCCESS)
+ Main PID: 1070 (haproxy)
+    Tasks: 2 (limit: 1340692)
+   Memory: 3.5M
+   CGroup: /docker/53d32bd2ac16b0c5cdb98479959c122569abb503319c9b47f6614a475d957f0c/system.slice/hapro
+xy.service
+           ├─1070 /usr/sbin/haproxy -Ws -f /etc/haproxy/haproxy.cfg -f /etc/haproxy/conf.d -p /run/hap
+roxy.pid
+           └─1084 /usr/sbin/haproxy -Ws -f /etc/haproxy/haproxy.cfg -f /etc/haproxy/conf.d -p /run/hap
+roxy.pid
+
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Ab
+out to execute: /usr/sbin/haproxy -Ws -f $CONFIG -f $CFGDIR -p $PIDFILE $OPTIONS
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Fo
+rked /usr/sbin/haproxy as 1070
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1070]: PR_SET_MM_ARG_ST
+ART failed, proceeding without: Operation not permitted
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Ch
+anged start-pre -> start
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1070]: haproxy.service:
+ Executing: /usr/sbin/haproxy -Ws -f /etc/haproxy/haproxy.cfg -f /etc/haproxy/conf.d -p /run/haproxy.p
+id
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Go
+t notification message from PID 1070 (READY=1, MAINPID=1070)
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Ch
+anged start -> running
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Jo
+b haproxy.service/start finished, result=done
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: Started HAProxy Load Balancer.
+Mar 31 00:38:37 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service: Fa
+iled to send unit change signal for haproxy.service: Connection reset by peer
+[root@stlb01 ~]# logout
+[loki@stlb01 ~]$ logout
+Connection to stlb01 closed.
+thor@jump_host ~$ curl 172.16.238.14:80
+Welcome to xFusionCorp Industries!
+thor@jump_host ~$ curl 172.16.238.10:8083
+Welcome to xFusionCorp Industries!
+thor@jump_host ~$ curl 172.16.238.11:8083
+Welcome to xFusionCorp Industries!
+thor@jump_host ~$ curl 172.16.238.12:8083
+Welcome to xFusionCorp Industries!
+thor@jump_host ~$
