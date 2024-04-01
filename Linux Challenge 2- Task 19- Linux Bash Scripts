@@ -1,0 +1,81 @@
+The production support team of xFusionCorp Industries is working on developing some bash scripts to automate different day to day tasks. One is to create a bash script for taking websites backup. They have a static website running on App Server 1 in Stratos Datacenter, and they need to create a bash script named official_backup.sh which should accomplish the following tasks. (Also remember to place the script under /scripts directory on App Server 1).
+
+
+a. Create a zip archive named xfusioncorp_official.zip of /var/www/html/official directory.
+
+b. Save the archive in /backup/ on App Server 1. This is a temporary storage, as backups from this location will be clean on weekly basis. Therefore, we also need to save this backup archive on Nautilus Backup Server.
+
+c. Copy the created archive to Nautilus Backup Server server in /backup/ location.
+
+d. Please make sure script won't ask for password while copying the archive file. Additionally, the respective server user (for example, tony in case of App Server 1) must be able to run it.
+
+# Solution
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:SySamszyWhhLGFiybhGBqfrr8g55wS/3e37ZpBOvICs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ vi /scripts/beta_backup.sh
+[tony@stapp01 ~]$ cat /scripts/beta_backup.sh
+#!/bin/bash
+
+zip -r /backup/xfusioncorp_beta.zip /var/www/html/beta
+
+scp /backup/xfusioncorp_beta.zip clint@stbkp01:/backup
+
+[tony@stapp01 ~]$ ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/tony/.ssh/id_rsa): 
+Created directory '/home/tony/.ssh'.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/tony/.ssh/id_rsa.
+Your public key has been saved in /home/tony/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:tipVcdEMRGu0fXJH+KNFKa5MlBAnMvtgn2j32tDDhTo tony@stapp01.stratos.xfusioncorp.com
+The key's randomart image is:
++---[RSA 2048]----+
+|       o *O*.  .o|
+|        =.+*o..+ |
+|       + o= + =..|
+|      . *....= +.|
+|       +S=o...o .|
+|      o...=o..   |
+|     .  .E =     |
+|    .  .  = .    |
+|     ..  . .     |
++----[SHA256]-----+
+[tony@stapp01 ~]$ ssh-copy-id clint@stbkp01
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/tony/.ssh/id_rsa.pub"
+The authenticity of host 'stbkp01 (172.16.238.16)' can't be established.
+ECDSA key fingerprint is SHA256:O8qnJu3ZmhXN5+n1dZMUE73M2oPteVx2r0640wI0IvU.
+ECDSA key fingerprint is MD5:5d:5e:05:31:03:20:a5:04:2c:76:6c:df:08:49:65:bb.
+Are you sure you want to continue connecting (yes/no)? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+clint@stbkp01's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'clint@stbkp01'"
+and check to make sure that only the key(s) you wanted were added.
+
+[tony@stapp01 ~]$ ssh clint@stbkp01
+[clint@stbkp01 ~]$ logout
+Connection to stbkp01 closed.
+[tony@stapp01 ~]$ cd /scripts/
+[tony@stapp01 scripts]$ sh beta_backup.sh
+  adding: var/www/html/beta/ (stored 0%)
+  adding: var/www/html/beta/index.html (stored 0%)
+  adding: var/www/html/beta/.gitkeep (stored 0%)
+xfusioncorp_beta.zip                                                100%  588     2.0MB/s   00:00    
+[tony@stapp01 scripts]$ ls -l /backup
+total 4
+-rw-rw-r-- 1 tony tony 588 Apr  1 22:48 xfusioncorp_beta.zip
+[tony@stapp01 scripts]$ ssh clint@stbkp01
+Last login: Mon Apr  1 22:45:58 2024 from 172.16.238.10
+[clint@stbkp01 ~]$ ls -l /backup
+total 4
+-rw-rw-r-- 1 clint clint 588 Apr  1 22:48 xfusioncorp_beta.zip
+[clint@stbkp01 ~]$
