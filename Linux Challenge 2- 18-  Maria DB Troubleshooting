@@ -1,0 +1,169 @@
+There is a critical issue going on with the Nautilus application in Stratos DC. The production support team identified that the application is unable to connect to the database. After digging into the issue, the team found that mariadb service is down on the database server.
+
+
+Look into the issue and fix the same.
+
+# SOlution:
+thor@jump_host ~$ ssh peter@stdb01
+The authenticity of host 'stdb01 (172.16.239.10)' can't be established.
+ECDSA key fingerprint is SHA256:/GD+8ZmmDQf7KuNTHHz/LOUQ6WS3ZCXvcOH2oWxklfE.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stdb01,172.16.239.10' (ECDSA) to the list of known hosts.
+peter@stdb01's password: 
+[peter@stdb01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for peter: 
+[root@stdb01 ~]# systemctl status mariadb
+● mariadb.service - MariaDB 10.3 database server
+   Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; vendor preset: disabled)
+   Active: inactive (dead) since Mon 2024-04-01 22:18:25 UTC; 2min 21s ago
+     Docs: man:mysqld(8)
+           https://mariadb.com/kb/en/library/systemd/
+  Process: 778 ExecStartPost=/usr/libexec/mysql-check-upgrade (code=exited, status=0/SUCCESS)
+  Process: 735 ExecStart=/usr/libexec/mysqld --basedir=/usr $MYSQLD_OPTS $_WSREP_NEW_CLUSTER (code=exi
+ted, status=0/SUCCESS)
+  Process: 581 ExecStartPre=/usr/libexec/mysql-prepare-db-dir mariadb.service (code=exited, status=0/S
+UCCESS)
+  Process: 486 ExecStartPre=/usr/libexec/mysql-check-socket (code=exited, status=0/SUCCESS)
+ Main PID: 735 (code=exited, status=0/SUCCESS)
+   Status: "MariaDB server is down"
+
+Apr 01 22:18:24 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t notification message from PID 735 (STATUS=ensuring dirty buffer pool are written to log, EXTEND_TIME
+OUT_USEC=30000000)
+Apr 01 22:18:24 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t notification message from PID 735 (STATUS=Free innodb buffer pool, EXTEND_TIMEOUT_USEC=30000000)
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t notification message from PID 735 (STATUS=MariaDB server is down)
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t notification message from PID 735 (STATUS=MariaDB server is down)
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+ild 735 belongs to mariadb.service.
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ma
+in process exited, code=exited, status=0/SUCCESS
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Succeeded.
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+anged stop-sigterm -> dead
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Jo
+b mariadb.service/stop finished, result=done
+Apr 01 22:18:25 stdb01.stratos.xfusioncorp.com systemd[1]: Stopped MariaDB 10.3 database server.
+[root@stdb01 ~]# 
+[root@stdb01 ~]# 
+[root@stdb01 ~]# 
+[root@stdb01 ~]# systemctl start  mariadb
+Job for mariadb.service failed because the control process exited with error code.
+See "systemctl status mariadb.service" and "journalctl -xe" for details.
+[root@stdb01 ~]# systemctl status mariadb -l
+● mariadb.service - MariaDB 10.3 database server
+   Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Mon 2024-04-01 22:21:41 UTC; 28s ago
+     Docs: man:mysqld(8)
+           https://mariadb.com/kb/en/library/systemd/
+  Process: 778 ExecStartPost=/usr/libexec/mysql-check-upgrade (code=exited, status=0/SUCCESS)
+  Process: 735 ExecStart=/usr/libexec/mysqld --basedir=/usr $MYSQLD_OPTS $_WSREP_NEW_CLUSTER (code=exi
+ted, status=0/SUCCESS)
+  Process: 1025 ExecStartPre=/usr/libexec/mysql-prepare-db-dir mariadb.service (code=exited, s
+tatus=1/FAILURE)
+  Process: 996 ExecStartPre=/usr/libexec/mysql-check-socket (code=exited, status=0/SUCCESS)
+ Main PID: 735 (code=exited, status=0/SUCCESS)
+
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com mysql-prepare-db-dir[1025]: Database MariaDB is not ini
+tialized, but the directory /var/lib/mysql is not empty, so initialization cannot be done.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com mysql-prepare-db-dir[1025]: Make sure the /var/lib/mysq
+l is empty before running mysql-prepare-db-dir.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+ild 1025 belongs to mariadb.service.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Co
+ntrol process exited, code=exited status=1
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t final SIGCHLD for state start-pre.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Fa
+iled with result 'exit-code'.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+anged start-pre -> failed
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Jo
+b mariadb.service/start finished, result=failed
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: Failed to start Mar
+iaDB 10.3 database server.
+Apr 01 22:21:41 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Un
+it entered failed state.
+[root@stdb01 ~]# ls -l /var/lib/
+total 72
+drwxr-xr-x 1 root  root  4096 Feb  8  2023 alternatives
+drwxr-xr-x 1 root  root  4096 Feb  7  2023 dbus
+drwxr-xr-x 1 root  root  4096 Mar  4  2023 dnf
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 games
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 misc
+drwxr-xr-x 4 mysql mysql 4096 Apr  1 22:18 mysqld
+drwx------ 1 root  root  4096 Feb  7  2023 portables
+drwx------ 1 root  root  4096 Feb  7  2023 private
+drwxr-x--- 1 root  root  4096 Feb  8  2023 rhsm
+drwxr-xr-x 1 root  root  4096 Apr  1 22:18 rpm
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 rpm-state
+drwxr-xr-x 1 root  root  4096 Feb  7  2023 selinux
+drwxr-xr-x 1 root  root  4096 Feb  8  2023 systemd
+[root@stdb01 ~]# mv /var/lib/mysqld/ /var/lib/mysql
+[root@stdb01 ~]# ls -l /var/lib/
+total 72
+drwxr-xr-x 1 root  root  4096 Feb  8  2023 alternatives
+drwxr-xr-x 1 root  root  4096 Feb  7  2023 dbus
+drwxr-xr-x 1 root  root  4096 Mar  4  2023 dnf
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 games
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 misc
+drwxr-xr-x 4 mysql mysql 4096 Apr  1 22:18 mysql
+drwx------ 1 root  root  4096 Feb  7  2023 portables
+drwx------ 1 root  root  4096 Feb  7  2023 private
+drwxr-x--- 1 root  root  4096 Feb  8  2023 rhsm
+drwxr-xr-x 1 root  root  4096 Apr  1 22:18 rpm
+drwxr-xr-x 1 root  root  4096 Jun 21  2021 rpm-state
+drwxr-xr-x 1 root  root  4096 Feb  7  2023 selinux
+drwxr-xr-x 1 root  root  4096 Feb  8  2023 systemd
+[root@stdb01 ~]# systemctl start mariadb
+[root@stdb01 ~]# systemctl status  mariadb
+● mariadb.service - MariaDB 10.3 database server
+   Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 22:25:07 UTC; 9s ago
+     Docs: man:mysqld(8)
+           https://mariadb.com/kb/en/library/systemd/
+  Process: 1285 ExecStartPost=/usr/libexec/mysql-check-upgrade (code=exited, status=0/SUCCESS)
+  Process: 1181 ExecStartPre=/usr/libexec/mysql-prepare-db-dir mariadb.service (code=exited, status=0/
+SUCCESS)
+  Process: 1145 ExecStartPre=/usr/libexec/mysql-check-socket (code=exited, status=0/SUCCESS)
+ Main PID: 1242 (mysqld)
+   Status: "Taking your SQL requests now..."
+    Tasks: 30 (limit: 1340692)
+   Memory: 74.7M
+   CGroup: /docker/ad29da2547069d0d5658ece354fb26bf38857021a3b6a3e7bc2b142f2d16078d/system.slice/maria
+db.service
+           └─1242 /usr/libexec/mysqld --basedir=/usr
+
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1285]: Applying namespa
+ce mount on /run/systemd/unit-root/var/tmp
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1285]: Successfully mou
+nted /var/tmp/systemd-private-28035092b6434b978201050a6536bacc-mariadb.service-EeX7en/tmp to /run/syst
+emd/unit-root/var/tmp
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1285]: mariadb.service:
+ Executing: /usr/libexec/mysql-check-upgrade
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+ild 1285 belongs to mariadb.service.
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Co
+ntrol process exited, code=exited status=0
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Go
+t final SIGCHLD for state start-post.
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Ch
+anged start-post -> running
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Jo
+b mariadb.service/start finished, result=done
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: Started MariaDB 10.3 database server.
+Apr 01 22:25:07 stdb01.stratos.xfusioncorp.com systemd[1]: mariadb.service: Fa
+iled to send unit change signal for mariadb.service: Connection reset by peer
+[root@stdb01 ~]# 
+[root@stdb01 ~]# 
+[root@stdb01 ~]#
