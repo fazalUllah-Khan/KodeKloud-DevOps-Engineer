@@ -1,0 +1,62 @@
+xFusionCorp Industries has an application running on Nautlitus infrastructure in Stratos Datacenter. The monitoring tool recognised that there is an issue with the haproxy service on LBR server. That needs to fixed to make the application work properly.
+
+
+Troubleshoot and fix the issue, and make sure haproxy service is running on Nautilus LBR server. Once fixed, make sure you are able to access the website using StaticApp button on the top bar.
+
+# Solution:
+thor@jump_host ~$ ssh loki@stlb01
+The authenticity of host 'stlb01 (172.16.238.14)' can't be established.
+ECDSA key fingerprint is SHA256:SySamszyWhhLGFiybhGBqfrr8g55wS/3e37ZpBOvICs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stlb01,172.16.238.14' (ECDSA) to the list of known hosts.
+loki@stlb01's password: 
+[loki@stlb01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for loki: 
+[root@stlb01 ~]# systemctl status haproxy
+● haproxy.service - HAProxy Load Balancer
+   Loaded: loaded (/usr/lib/systemd/system/haproxy.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)
+
+Apr 01 22:11:38 stlb01.stratos.xfusioncorp.com systemd[1]: Collecting haproxy.service
+[root@stlb01 ~]# haproxy -c -f /etc/haproxy/haproxy.cfg
+[ALERT] 091/221210 (375) : Proxy 'main': unable to find required default_backend: 'app'.
+[ALERT] 091/221210 (375) : Fatal errors found in configuration.
+[root@stlb01 ~]# cat /etc/haproxy/haproxy.cfg |grep app
+    default_backend             app
+#backend app
+    server  app1 stapp01:6100 check
+    server  app2 stapp02:6100 check
+    server  app3 stapp03:6100 check
+[root@stlb01 ~]# vi cat /etc/haproxy/haproxy.cfg
+2 files to edit
+[root@stlb01 ~]# vi /etc/haproxy/haproxy.cfg
+[root@stlb01 ~]# haproxy -c -f /etc/haproxy/haproxy.cfg
+Configuration file is valid
+[root@stlb01 ~]# systemctl start haproxy
+[root@stlb01 ~]# systemctl status haproxy
+● haproxy.service - HAProxy Load Balancer
+   Loaded: loaded (/usr/lib/systemd/system/haproxy.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 22:14:33 UTC; 8s ago
+ Main PID: 384 (haproxy-systemd)
+   CGroup: /docker/b4dec004f0a762fc0952be9d146f21487eba93d9bb2ca1aa8bd2080a5284ce9b/system.slice/haproxy.service
+           ├─384 /usr/sbin/haproxy-systemd-wrapper -f /etc/haproxy/haproxy.cfg -p /run/haproxy.pid
+           ├─385 /usr/sbin/haproxy -f /etc/haproxy/haproxy.cfg -p /run/haproxy.pid -Ds
+           └─386 /usr/sbin/haproxy -f /etc/haproxy/haproxy.cfg -p /run/haproxy.pid -Ds
+
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[1]: About to execute: /usr/sbin/haproxy-sy...NS
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[1]: Forked /usr/sbin/haproxy-systemd-wrapp...84
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[1]: haproxy.service changed dead -> running
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[1]: Job haproxy.service/start finished, re...ne
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[1]: Started HAProxy Load Balancer.
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com systemd[384]: Executing: /usr/sbin/haproxy-systemd...id
+Apr 01 22:14:33 stlb01.stratos.xfusioncorp.com haproxy-systemd-wrapper[384]: haproxy-systemd-wrappe...
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stlb01 ~]#
