@@ -1,0 +1,385 @@
+xFusionCorp Industries uses some monitoring tools to check the status of every service, application, etc running on the systems. Recently, the monitoring system identified that Apache service is not running on some of the Nautilus Application Servers in Stratos Datacenter.
+
+
+1. Identify the faulty Nautilus Application Server and fix the issue. Also, make sure Apache service is up and running on all Nautilus Application Servers. Do not try to stop any kind of firewall that is already running.
+
+
+2. Apache is running on 3000 port on all Nautilus Application Servers and its document root must be /var/www/html on all app servers.
+
+
+3. Finally you can test from jump host using curl command to access Apache on all app servers and it should be reachable and you should get some static page. E.g. curl http://172.16.238.10:3000/.
+
+# Solution:
+- In our case, we check start and check Apache server status for all 3 servers. 
+- For our case sever 02 had problem , while Sever 1 and 3 apache sever running normal.
+
+Sever # 01:
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:uM/Y8OV5RcjNVaf+mBIqIxW6CRszTDpN0HTWX8iDqnk.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# systemctl start httpd
+[root@stapp01 ~]# systemctl status  httpd.service
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.4M
+   CGroup: /docker/c54a0c0fe8286879aaa061c2a021160448e8ea44dc0205c176d1d676f308dbee/system.>
+           ├─1010 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           ├─1035 /usr/sbin/httpd -DFOREGROUND
+           ├─1036 /usr/sbin/httpd -DFOREGROUND
+           └─1037 /usr/sbin/httpd -DFOREGROUND
+
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.4M
+   CGroup: /docker/c54a0c0fe8286879aaa061c2a021160448e8ea44dc0205c176d1d676f308dbee/system.s>
+           ├─1010 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           ├─1035 /usr/sbin/httpd -DFOREGROUND
+           ├─1036 /usr/sbin/httpd -DFOREGROUND
+           └─1037 /usr/sbin/httpd -DFOREGROUND
+
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed running ->
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: http
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor pr>
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.4M
+   CGroup: /docker/c54a0c0fe8286879aaa061c2a021160448e8ea44dc0205c176d1d676f3>
+           ├─1010 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           ├─1035 /usr/sbin/httpd -DFOREGROUND
+           ├─1036 /usr/sbin/httpd -DFOREGROUND
+           └─1037 /usr/sbin/httpd -DFOREGROUND
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.4M
+   CGroup: /docker/c54a0c0fe8286879aaa061c2a021160448e8ea44dc0205c176d1d676f308dbee/system.slice/http>
+           ├─1010 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           ├─1035 /usr/sbin/httpd -DFOREGROUND
+           ├─1036 /usr/sbin/httpd -DFOREGROUND
+           └─1037 /usr/sbin/httpd -DFOREGROUND
+
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed running -> reload
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job httpd.se>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service/nop fini>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com httpd[1010]: Server configured, listening on: port 30>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed reload -> running
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+Apr 01 23:13:19 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+Apr 01 23:13:29 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+Apr 01 23:13:40 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message f>
+~
+~
+~
+~
+~
+~
+~
+~
+lines 1-25/25 (END)...skipping...
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:13:10 UTC; 33s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1010 (httpd)
+   Status: "Running, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.4M
+   CGroup: /docker/c54a0c0fe8286879aaa061c2a021160448e8ea44dc0205c176d1d676f308dbee/system.slice/httpd.service
+           ├─1010 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           ├─1035 /usr/sbin/httpd -DFOREGROUND
+           ├─1036 /usr/sbin/httpd -DFOREGROUND
+           └─1037 /usr/sbin/httpd -DFOREGROUND
+
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed running -> reload
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job httpd.service/nop as 92
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service/nop finished, result=done
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com httpd[1010]: Server configured, listening on: port 3000
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message from PID 1010 (READY=>
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed reload -> running
+Apr 01 23:13:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message from PID 1010 (READY=>
+Apr 01 23:13:19 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message from PID 1010 (READY=>
+Apr 01 23:13:29 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message from PID 1010 (READY=>
+Apr 01 23:13:40 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification message from PID 1010 (READY=>
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+
+[root@stapp01 ~]#
+
+Server # 02:
+Last login: Mon Apr  1 23:09:31 UTC 2024 on pts/0
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:5i/wOoWSmoPpM1rPLP1vz3/YH23MAJs/OpBwSRcKYqU.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+Permission denied, please try again.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# systemctl start httpd
+Job for httpd.service failed because the control process exited with error code.
+See "systemctl status httpd.service" and "journalctl -xe" for details.
+[root@stapp02 ~]# systemctl status  httpd.service
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Mon 2024-04-01 23:16:04 UTC; 33s ago
+     Docs: man:httpd.service(8)
+  Process: 1032 ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND (code=exited, status=1/FAILURE)
+ Main PID: 1032 (code=exited, status=1/FAILURE)
+
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1032]: Successfully mounted /var/tmp/systemd->
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1032]: httpd.service: Executing: /usr/sbin/ht>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com httpd[1032]: httpd: Syntax error on line 34 of /etc/h>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Child 1032 belongs to http>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Main process exited, code=>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed with result 'exit-c>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed start -> failed
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service/start fi>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: Failed to start The Apache HTTP Server.
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Unit entered failed state.
+
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Mon 2024-04-01 23:16:04 UTC; 2min 51s ago
+     Docs: man:httpd.service(8)
+  Process: 1032 ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND (code=exited, status=1/FAILURE)
+ Main PID: 1032 (code=exited, status=1/FAILURE)
+
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1032]: Successfully mounted /var/tmp/systemd-private-b039e7db6ae7407>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1032]: httpd.service: Executing: /usr/sbin/httpd -DFOREGROUND
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com httpd[1032]: httpd: Syntax error on line 34 of /etc/httpd/conf/httpd.conf: S>
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Child 1032 belongs to httpd.service.
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Main process exited, code=exited, status=1/FAILURE
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed with result 'exit-code'.
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed start -> failed
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service/start finished, result=failed
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: Failed to start The Apache HTTP Server.
+Apr 01 23:16:04 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Unit entered failed state.
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+
+[1]+  Stopped                 systemctl status httpd.service
+[root@stapp02 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep DocumentRoot
+# DocumentRoot: The directory out of which you will serve your
+DocumentRoot /var/www/html;
+    # access content that does not live under the DocumentRoot.
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+"Listen 3000"
+[root@stapp02 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 3000"
+[root@stapp02 ~]# systemctl start httpd  &&  systemctl  status httpd
+Job for httpd.service failed because the control process exited with error code.
+See "systemctl status httpd.service" and "journalctl -xe" for details.
+[root@stapp02 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 3000"
+[root@stapp02 ~]# systemctl start httpd && systemctl status httpd
+Job for httpd.service failed because the control process exited with error code.
+See "systemctl status httpd.service" and "journalctl -xe" for details.
+[root@stapp02 ~]# systemctl status  httpd.service
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Mon 2024-04-01 23:31:12 UTC; 33s ago
+     Docs: man:httpd.service(8)
+  Process: 1227 ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND (code=exited, status=1/FAILU>
+ Main PID: 1227 (code=exited, status=1/FAILURE)
+   Status: "Reading configuration..."
+
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com httpd[1227]: AH00526: Syntax error on line 4>
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com httpd[1227]: Port must be specified
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Child 1227 belong>
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Main process exit>
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed with resul>
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed start -> >
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service>
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: Failed to start The Apache HTTP >
+Apr 01 23:31:12 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Unit entered fail>
+
+[root@stapp02 ~]# ^C
+[root@stapp02 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp02 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 3000
+[root@stapp02 ~]# systemctl start httpd && systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:35:34 UTC; 27ms ago
+     Docs: man:httpd.service(8)
+ Main PID: 1304 (httpd)
+   Status: "Started, listening on: port 3000"
+    Tasks: 174 (limit: 1340692)
+   Memory: 17.1M
+   CGroup: /docker/786b7fa7d49b93754788a030d92000409ed1a0b6ac25c93245fa02fe33cd59a1/system.s>
+           ├─1304 /usr/sbin/httpd -DFOREGROUND
+           ├─1337 /usr/sbin/httpd -DFOREGROUND
+           ├─1338 /usr/sbin/httpd -DFOREGROUND
+           ├─1339 /usr/sbin/httpd -DFOREGROUND
+           └─1340 /usr/sbin/httpd -DFOREGROUND
+
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to send un>
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed running ->
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job>
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service>
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com httpd[1304]: Server configured, listening on>
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed reload ->>
+Apr 01 23:35:34 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+
+[root@stapp02 ~]# curl http://172.16.238.10:3000/
+Welcome to xFusionCorp Industries!
+[root@stapp02 ~]# curl -i http://172.16.238.10:3000/
+HTTP/1.1 200 OK
+Date: Mon, 01 Apr 2024 23:36:40 GMT
+Server: Apache/2.4.37 (centos)
+Last-Modified: Mon, 01 Apr 2024 23:09:23 GMT
+ETag: "23-6151114861b3e"
+Accept-Ranges: bytes
+Content-Length: 35
+Content-Type: text/html; charset=UTF-8
+
+Welcome to xFusionCorp Industries!
+[root@stapp02 ~]#
+
+Server # 03:
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:fv7Gb6Te/Y8a1R0VI+FWkgPZ08XO9j4mkHOu9k25cMs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+Permission denied, please try again.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# systemctl start httpd
+[root@stapp03 ~]# systemctl status  httpd.service
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Mon 2024-04-01 23:34:19 UTC; 8s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1007 (httpd)
+   Status: "Started, listening on: port 3000"
+    Tasks: 213 (limit: 1340692)
+   Memory: 18.8M
+   CGroup: /docker/6748cc7ca4417c4d83a87d57bbbf5fb7fe4ce4a573d4fdde235d4a8abc038c61/system.s>
+           ├─1007 /usr/sbin/httpd -DFOREGROUND
+           ├─1032 /usr/sbin/httpd -DFOREGROUND
+           ├─1033 /usr/sbin/httpd -DFOREGROUND
+           ├─1034 /usr/sbin/httpd -DFOREGROUND
+           └─1035 /usr/sbin/httpd -DFOREGROUND
+
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Failed to send un>
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed running ->
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Installed new job>
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Job httpd.service>
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com httpd[1007]: Server configured, listening on>
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Changed reload ->>
+Apr 01 23:34:19 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got notification >
+
+[root@stapp03 ~]#
