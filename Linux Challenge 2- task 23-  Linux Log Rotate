@@ -1,0 +1,565 @@
+The Nautilus DevOps team is ready to launch a new application, which they will deploy on app servers in Stratos Datacenter. They are expecting significant traffic/usage of httpd on app servers after that. This will generate massive logs, creating huge log files. To utilise the storage efficiently, they need to compress the log files and need to rotate old logs. Check the requirements shared below:
+
+
+a. In all app servers install httpd package.
+
+b. Using logrotate configure httpd logs rotation to monthly and keep only 3 rotated logs.
+
+(If by default log rotation is set, then please update configuration as needed)
+
+# Solution:
+
+run on all 3 servers to install httpd, configure logrotate to monthly and 3. 
+
+****************************************** Server-01 *************************************************
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:/8H+JAS3kszoVwEVNRWR3yqG5DMnQoU05pbK9Dpo/P8.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]#  yum install httpd -y
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            17 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            28 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                               10 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                               14 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                               10 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               19 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               32 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        2.9 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      16 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             847 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                  Architecture Version                                  Repository       Size
+======================================================================================================
+Installing:
+ httpd                    x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       1.6 M
+Installing dependencies:
+ apr                      x86_64       1.6.3-12.el8                             appstream       129 k
+ apr-util                 x86_64       1.6.1-9.el8                              appstream       106 k
+ centos-logos-httpd       noarch       85.8-2.el8                               appstream        75 k
+ httpd-filesystem         noarch       2.4.37-64.module_el8+965+1ad5c49d        appstream        44 k
+ httpd-tools              x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       112 k
+ mailcap                  noarch       2.1.48-3.el8                             baseos           39 k
+ mod_http2                x86_64       1.15.7-9.module_el8+920+e7b4a22a.3       appstream       156 k
+Installing weak dependencies:
+ apr-util-bdb             x86_64       1.6.1-9.el8                              appstream        25 k
+ apr-util-openssl         x86_64       1.6.1-9.el8                              appstream        27 k
+Enabling module streams:
+ httpd                                 2.4                                                           
+
+Transaction Summary
+======================================================================================================
+Install  10 Packages
+
+Total download size: 2.2 M
+Installed size: 5.6 M
+Downloading Packages:
+(1/10): apr-util-bdb-1.6.1-9.el8.x86_64.rpm                            19 kB/s |  25 kB     00:01    
+(2/10): apr-1.6.3-12.el8.x86_64.rpm                                    95 kB/s | 129 kB     00:01    
+(3/10): apr-util-1.6.1-9.el8.x86_64.rpm                                77 kB/s | 106 kB     00:01    
+(4/10): apr-util-openssl-1.6.1-9.el8.x86_64.rpm                        55 kB/s |  27 kB     00:00    
+(5/10): centos-logos-httpd-85.8-2.el8.noarch.rpm                      158 kB/s |  75 kB     00:00    
+(6/10): httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm      287 kB/s | 112 kB     00:00    
+(7/10): httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch.rpm 103 kB/s |  44 kB     00:00    
+(8/10): mailcap-2.1.48-3.el8.noarch.rpm                               152 kB/s |  39 kB     00:00    
+(9/10): httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm            1.3 MB/s | 1.6 MB     00:01    
+(10/10): mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64.rpm      294 kB/s | 156 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 716 kB/s | 2.2 MB     00:03     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Running scriptlet: apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Installing       : apr-util-bdb-1.6.1-9.el8.x86_64                                             2/10 
+  Installing       : apr-util-openssl-1.6.1-9.el8.x86_64                                         3/10 
+  Installing       : apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Running scriptlet: apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Installing       : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        5/10 
+  Installing       : mailcap-2.1.48-3.el8.noarch                                                 6/10 
+  Running scriptlet: httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : centos-logos-httpd-85.8-2.el8.noarch                                        8/10 
+  Installing       : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Installing       : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Running scriptlet: httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Verifying        : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Verifying        : apr-util-1.6.1-9.el8.x86_64                                                 2/10 
+  Verifying        : apr-util-bdb-1.6.1-9.el8.x86_64                                             3/10 
+  Verifying        : apr-util-openssl-1.6.1-9.el8.x86_64                                         4/10 
+  Verifying        : centos-logos-httpd-85.8-2.el8.noarch                                        5/10 
+  Verifying        : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                              6/10 
+  Verifying        : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Verifying        : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        8/10 
+  Verifying        : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Verifying        : mailcap-2.1.48-3.el8.noarch                                                10/10 
+Installed products updated.
+
+Installed:
+  apr-1.6.3-12.el8.x86_64                                                                             
+  apr-util-1.6.1-9.el8.x86_64                                                                         
+  apr-util-bdb-1.6.1-9.el8.x86_64                                                                     
+  apr-util-openssl-1.6.1-9.el8.x86_64                                                                 
+  centos-logos-httpd-85.8-2.el8.noarch                                                                
+  httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                      
+  httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                                           
+  httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                
+  mailcap-2.1.48-3.el8.noarch                                                                         
+  mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                                                 
+
+Complete!
+[root@stapp01 ~]# ls -l /etc/logrotate.d/
+total 20
+-rw-r--r-- 1 root root 130 Feb  8  2023 btmp
+-rw-r--r-- 1 root root  88 Apr 12  2021 dnf
+-rw-r--r-- 1 root root 194 Feb 16 08:55 httpd
+-rw-r--r-- 1 root root  88 Aug  8  2022 subscription-manager
+-rw-r--r-- 1 root root 145 Feb 19  2018 wtmp
+[root@stapp01 ~]# cat /etc/logrotate.d/httpd
+/var/log/httpd/*log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+    endscript
+}
+[root@stapp01 ~]# vi /etc/logrotate.d/httpd
+[root@stapp01 ~]# cat /etc/logrotate.d/httpd
+/var/log/httpd/*log {
+   monthly
+   rotate 3
+   missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+    endscript
+}
+[root@stapp01 ~]# systemctl start httpd
+[root@stapp01 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Tue 2024-04-02 00:06:11 UTC; 10s ago
+     Docs: man:httpd.service(8)
+ Main PID: 954 (httpd)
+   Status: "Running, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.1M
+   CGroup: /docker/6a9f64be678a95ac9e1aa7ff2aa5d39809b9a7d19f16f29b72e0762c42e8d032/system.slice/httpd
+.service
+           ├─954 /usr/sbin/httpd -DFOREGROUND
+           ├─980 /usr/sbin/httpd -DFOREGROUND
+           ├─981 /usr/sbin/httpd -DFOREGROUND
+           ├─982 /usr/sbin/httpd -DFOREGROUND
+           └─983 /usr/sbin/httpd -DFOREGROUND
+
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Fai
+led to send unit change signal for httpd.service: Connection reset by peer
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 954 (RELOADING=1, STATUS=Reading configuration...)
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 89
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com httpd[954]: Server configured, listening on: port 80
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 954 (READY=1, STATUS=Configuration loaded.)
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 02 00:06:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 954 (READY=1, STATUS=Started, listening on: port 80, MAINPID=954)
+Apr 02 00:06:20 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 954 (READY=1, STATUS=Running, listening on: port 80)
+[root@stapp01 ~]# 
+[root@stapp01 ~]# 
+[root@stapp01 ~]#
+************************* Sever 02 **********************************************************************
+Last login: Mon Apr  1 23:57:04 UTC 2024 on pts/0
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:ZhLfR+aRoaSWZ0DH556pe0pYy321nnCx1HH/HBa+xBY.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# yum install httpd
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                           3.5 kB/s | 4.4 kB     00:01    
+CentOS Stream 8 - AppStream                                           3.8 MB/s |  28 MB     00:07    
+CentOS Stream 8 - BaseOS                                               12 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                               14 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                               10 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                              9.8 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               19 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        1.9 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      15 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             827 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                  Architecture Version                                  Repository       Size
+======================================================================================================
+Installing:
+ httpd                    x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       1.6 M
+Installing dependencies:
+ apr                      x86_64       1.6.3-12.el8                             appstream       129 k
+ apr-util                 x86_64       1.6.1-9.el8                              appstream       106 k
+ centos-logos-httpd       noarch       85.8-2.el8                               appstream        75 k
+ httpd-filesystem         noarch       2.4.37-64.module_el8+965+1ad5c49d        appstream        44 k
+ httpd-tools              x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       112 k
+ mailcap                  noarch       2.1.48-3.el8                             baseos           39 k
+ mod_http2                x86_64       1.15.7-9.module_el8+920+e7b4a22a.3       appstream       156 k
+Installing weak dependencies:
+ apr-util-bdb             x86_64       1.6.1-9.el8                              appstream        25 k
+ apr-util-openssl         x86_64       1.6.1-9.el8                              appstream        27 k
+Enabling module streams:
+ httpd                                 2.4                                                           
+
+Transaction Summary
+======================================================================================================
+Install  10 Packages
+
+Total download size: 2.2 M
+Installed size: 5.6 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/10): apr-util-bdb-1.6.1-9.el8.x86_64.rpm                            19 kB/s |  25 kB     00:01    
+(2/10): apr-util-openssl-1.6.1-9.el8.x86_64.rpm                       455 kB/s |  27 kB     00:00    
+(3/10): apr-util-1.6.1-9.el8.x86_64.rpm                                75 kB/s | 106 kB     00:01    
+(4/10): centos-logos-httpd-85.8-2.el8.noarch.rpm                       15 kB/s |  75 kB     00:04    
+(5/10): apr-1.6.3-12.el8.x86_64.rpm                                    21 kB/s | 129 kB     00:06    
+(6/10): httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm            298 kB/s | 1.6 MB     00:05    
+(7/10): httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch.rpm  85 kB/s |  44 kB     00:00    
+(8/10): mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64.rpm       2.0 MB/s | 156 kB     00:00    
+(9/10): httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm      184 kB/s | 112 kB     00:00    
+(10/10): mailcap-2.1.48-3.el8.noarch.rpm                              213 kB/s |  39 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 324 kB/s | 2.2 MB     00:07     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Running scriptlet: apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Installing       : apr-util-bdb-1.6.1-9.el8.x86_64                                             2/10 
+  Installing       : apr-util-openssl-1.6.1-9.el8.x86_64                                         3/10 
+  Installing       : apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Running scriptlet: apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Installing       : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        5/10 
+  Installing       : mailcap-2.1.48-3.el8.noarch                                                 6/10 
+  Running scriptlet: httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : centos-logos-httpd-85.8-2.el8.noarch                                        8/10 
+  Installing       : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Installing       : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Running scriptlet: httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Verifying        : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Verifying        : apr-util-1.6.1-9.el8.x86_64                                                 2/10 
+  Verifying        : apr-util-bdb-1.6.1-9.el8.x86_64                                             3/10 
+  Verifying        : apr-util-openssl-1.6.1-9.el8.x86_64                                         4/10 
+  Verifying        : centos-logos-httpd-85.8-2.el8.noarch                                        5/10 
+  Verifying        : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                              6/10 
+  Verifying        : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Verifying        : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        8/10 
+  Verifying        : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Verifying        : mailcap-2.1.48-3.el8.noarch                                                10/10 
+Installed products updated.
+
+Installed:
+  apr-1.6.3-12.el8.x86_64                                                                             
+  apr-util-1.6.1-9.el8.x86_64                                                                         
+  apr-util-bdb-1.6.1-9.el8.x86_64                                                                     
+  apr-util-openssl-1.6.1-9.el8.x86_64                                                                 
+  centos-logos-httpd-85.8-2.el8.noarch                                                                
+  httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                      
+  httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                                           
+  httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                
+  mailcap-2.1.48-3.el8.noarch                                                                         
+  mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                                                 
+
+Complete!
+[root@stapp02 ~]# ls -l /etc/logrotate.d/
+total 20
+-rw-r--r-- 1 root root 130 Feb  8  2023 btmp
+-rw-r--r-- 1 root root  88 Apr 12  2021 dnf
+-rw-r--r-- 1 root root 194 Feb 16 08:55 httpd
+-rw-r--r-- 1 root root  88 Aug  8  2022 subscription-manager
+-rw-r--r-- 1 root root 145 Feb 19  2018 wtmp
+[root@stapp02 ~]# cat /etc/logrotate.d/httpd
+/var/log/httpd/*log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+    endscript
+}
+[root@stapp02 ~]# vi /etc/logrotate.d/httpd
+[root@stapp02 ~]# systemctl start httpd
+[root@stapp02 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Tue 2024-04-02 00:11:23 UTC; 6s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1052 (httpd)
+   Status: "Started, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.1M
+   CGroup: /docker/9f6d7b0b5115b3364421d443a8c7d35124d5db77427045ae768f2658c9fec592/system.slice/httpd
+.service
+           ├─1052 /usr/sbin/httpd -DFOREGROUND
+           ├─1078 /usr/sbin/httpd -DFOREGROUND
+           ├─1079 /usr/sbin/httpd -DFOREGROUND
+           ├─1080 /usr/sbin/httpd -DFOREGROUND
+           └─1081 /usr/sbin/httpd -DFOREGROUND
+
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Fai
+led to send unit change signal for httpd.service: Connection reset by peer
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com httpd[1052]: Server configured, listening on: port 80
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1052 (RELOADING=1, STATUS=Reading configuration...)
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 89
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1052 (READY=1, STATUS=Configuration loaded.)
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1052 (READY=1, STATUS=Started, listening on: port 80, MAINPID=1052)
+Apr 02 00:11:23 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+[root@stapp02 ~]# 
+[root@stapp02 ~]# 
+[root@stapp02 ~]#
+************************************ Sever 03 *******************************************************************
+Last login: Tue Apr  2 00:07:21 UTC 2024 on pts/2
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:3lH+oZSCvoOTje6gmxCHe+LzCsjBQkL0xtMx9210Cqk.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# yum install httpd
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                           1.9 kB/s | 4.4 kB     00:02    
+CentOS Stream 8 - AppStream                                           1.3 MB/s |  28 MB     00:21    
+CentOS Stream 8 - BaseOS                                               18 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                               18 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                               24 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               19 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               31 kB/s | 7.5 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        2.0 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      14 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             797 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                  Architecture Version                                  Repository       Size
+======================================================================================================
+Installing:
+ httpd                    x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       1.6 M
+Installing dependencies:
+ apr                      x86_64       1.6.3-12.el8                             appstream       129 k
+ apr-util                 x86_64       1.6.1-9.el8                              appstream       106 k
+ centos-logos-httpd       noarch       85.8-2.el8                               appstream        75 k
+ httpd-filesystem         noarch       2.4.37-64.module_el8+965+1ad5c49d        appstream        44 k
+ httpd-tools              x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       112 k
+ mailcap                  noarch       2.1.48-3.el8                             baseos           39 k
+ mod_http2                x86_64       1.15.7-9.module_el8+920+e7b4a22a.3       appstream       156 k
+Installing weak dependencies:
+ apr-util-bdb             x86_64       1.6.1-9.el8                              appstream        25 k
+ apr-util-openssl         x86_64       1.6.1-9.el8                              appstream        27 k
+Enabling module streams:
+ httpd                                 2.4                                                           
+
+Transaction Summary
+======================================================================================================
+Install  10 Packages
+
+Total download size: 2.2 M
+Installed size: 5.6 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/10): apr-1.6.3-12.el8.x86_64.rpm                                    24 kB/s | 129 kB     00:05    
+(2/10): apr-util-1.6.1-9.el8.x86_64.rpm                                20 kB/s | 106 kB     00:05    
+(3/10): apr-util-bdb-1.6.1-9.el8.x86_64.rpm                           4.0 kB/s |  25 kB     00:06    
+(4/10): apr-util-openssl-1.6.1-9.el8.x86_64.rpm                        14 kB/s |  27 kB     00:01    
+(5/10): centos-logos-httpd-85.8-2.el8.noarch.rpm                       38 kB/s |  75 kB     00:01    
+(6/10): httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch.rpm  54 kB/s |  44 kB     00:00    
+(7/10): httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm      124 kB/s | 112 kB     00:00    
+(8/10): mailcap-2.1.48-3.el8.noarch.rpm                               206 kB/s |  39 kB     00:00    
+(9/10): httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm            487 kB/s | 1.6 MB     00:03    
+(10/10): mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64.rpm      110 kB/s | 156 kB     00:01    
+------------------------------------------------------------------------------------------------------
+Total                                                                 232 kB/s | 2.2 MB     00:09     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Running scriptlet: apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Installing       : apr-util-bdb-1.6.1-9.el8.x86_64                                             2/10 
+  Installing       : apr-util-openssl-1.6.1-9.el8.x86_64                                         3/10 
+  Installing       : apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Running scriptlet: apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Installing       : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        5/10 
+  Installing       : mailcap-2.1.48-3.el8.noarch                                                 6/10 
+  Running scriptlet: httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : centos-logos-httpd-85.8-2.el8.noarch                                        8/10 
+  Installing       : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Installing       : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Running scriptlet: httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Verifying        : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Verifying        : apr-util-1.6.1-9.el8.x86_64                                                 2/10 
+  Verifying        : apr-util-bdb-1.6.1-9.el8.x86_64                                             3/10 
+  Verifying        : apr-util-openssl-1.6.1-9.el8.x86_64                                         4/10 
+  Verifying        : centos-logos-httpd-85.8-2.el8.noarch                                        5/10 
+  Verifying        : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                              6/10 
+  Verifying        : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Verifying        : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        8/10 
+  Verifying        : mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                         9/10 
+  Verifying        : mailcap-2.1.48-3.el8.noarch                                                10/10 
+Installed products updated.
+
+Installed:
+  apr-1.6.3-12.el8.x86_64                                                                             
+  apr-util-1.6.1-9.el8.x86_64                                                                         
+  apr-util-bdb-1.6.1-9.el8.x86_64                                                                     
+  apr-util-openssl-1.6.1-9.el8.x86_64                                                                 
+  centos-logos-httpd-85.8-2.el8.noarch                                                                
+  httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                      
+  httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                                           
+  httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                
+  mailcap-2.1.48-3.el8.noarch                                                                         
+  mod_http2-1.15.7-9.module_el8+920+e7b4a22a.3.x86_64                                                 
+
+Complete!
+[root@stapp03 ~]# ls -l /etc/logrotate.d/
+total 20
+-rw-r--r-- 1 root root 130 Feb  8  2023 btmp
+-rw-r--r-- 1 root root  88 Apr 12  2021 dnf
+-rw-r--r-- 1 root root 194 Feb 16 08:55 httpd
+-rw-r--r-- 1 root root  88 Aug  8  2022 subscription-manager
+-rw-r--r-- 1 root root 145 Feb 19  2018 wtmp
+[root@stapp03 ~]# cat /etc/logrotate.d/httpd
+/var/log/httpd/*log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+    endscript
+}
+[root@stapp03 ~]# vi /etc/logrotate.d/httpd
+[root@stapp03 ~]# cat /etc/logrotate.d/httpd
+/var/log/httpd/*log {
+    monthly
+    rotate 3
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+    endscript
+}
+[root@stapp03 ~]# systemctl start httpd
+[root@stapp03 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Tue 2024-04-02 00:13:20 UTC; 5s ago
+     Docs: man:httpd.service(8)
+ Main PID: 995 (httpd)
+   Status: "Started, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 18.6M
+   CGroup: /docker/a2fe2bc192a8903ca65adc02a247094b96554639f373fd920831fa8f2d9f56f7/system.slice/httpd
+.service
+           ├─ 995 /usr/sbin/httpd -DFOREGROUND
+           ├─1020 /usr/sbin/httpd -DFOREGROUND
+           ├─1021 /usr/sbin/httpd -DFOREGROUND
+           ├─1022 /usr/sbin/httpd -DFOREGROUND
+           └─1023 /usr/sbin/httpd -DFOREGROUND
+
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Fai
+led to send unit change signal for httpd.service: Connection reset by peer
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (RELOADING=1, STATUS=Reading configuration...)
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 93
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com httpd[995]: Server configured, listening on: port 80
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Configuration loaded.)
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 02 00:13:20 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Started, listening on: port 80, MAINPID=995)
+[root@stapp03 ~]# 
+[root@stapp03 ~]# 
+[root@stapp03 ~]#
+
