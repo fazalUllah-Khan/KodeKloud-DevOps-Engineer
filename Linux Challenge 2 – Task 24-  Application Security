@@ -1,0 +1,149 @@
+
+We have a backup management application UI hosted on Nautilus's backup server in Stratos DC. That backup management application code is deployed under Apache on the backup server itself, 
+and Nginx is running as a reverse proxy on the same server. Apache and Nginx ports are 8087 and 80, respectively. We have iptables firewall installed on this server. Make the appropriate 
+changes to fulfill the requirements mentioned below:
+
+
+We want to open all incoming connections to Nginx's port and block all incoming connections to Apache's port. Also make sure rules are permanent
+
+
+
+# Solution
+thor@jump_host ~$ ssh clint@stbkp01
+clint@stbkp01's password: 
+Last login: Tue Apr  2 12:58:04 2024 from 172.16.238.2
+[clint@stbkp01 ~]$ sudo su -
+[sudo] password for clint: 
+Last login: Tue Apr  2 12:58:11 UTC 2024 on pts/0
+[root@stbkp01 ~]# systemctl status iptables
+● iptables.service - IPv4 firewall with iptables
+   Loaded: loaded (/usr/lib/systemd/system/iptables.service; disabled; vendor preset: disabled)
+   Active: active (exited) since Tue 2024-04-02 13:00:58 UTC; 10min ago
+  Process: 839 ExecStart=/usr/libexec/iptables/iptables.init start (code=exited, status=0/SUCCESS)
+ Main PID: 839 (code=exited, status=0/SUCCESS)
+
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: iptables.service changed dead -> start
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: Starting IPv4 firewall with iptables...
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[839]: Executing: /usr/libexec/iptables/iptables.init start
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com iptables.init[839]: iptables: Applying firewall rules: [  OK  ]
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: Child 839 belongs to iptables.service
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: iptables.service: main process exited, code=exited, st...ESS
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: iptables.service changed start -> exited
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: Job iptables.service/start finished, result=done
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: Started IPv4 firewall with iptables.
+Apr 02 13:00:58 stbkp01.stratos.xfusioncorp.com systemd[1]: iptables.service: cgroup is empty
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stbkp01 ~]# ss -tlnp |grep http
+LISTEN     0      511          *:8087                     *:*                   users:(("httpd",pid=948,fd=3),("httpd",pid=696,fd=3),("httpd",pid=695,fd=3),("httpd",pid=694,fd=3),("httpd",pid=693,fd=3),("httpd",pid=692,fd=3),("httpd",pid=691,fd=3))
+[root@stbkp01 ~]# ss -tlnp |grep nginx
+LISTEN     0      511          *:80                       *:*                   users:(("nginx",pid=762,fd=6),("nginx",pid=761,fd=6),("nginx",pid=760,fd=6),("nginx",pid=759,fd=6),("nginx",pid=758,fd=6),("nginx",pid=757,fd=6),("nginx",pid=756,fd=6),("nginx",pid=755,fd=6),("nginx",pid=754,fd=6),("nginx",pid=753,fd=6),("nginx",pid=752,fd=6),("nginx",pid=751,fd=6),("nginx",pid=750,fd=6),("nginx",pid=749,fd=6),("nginx",pid=748,fd=6),("nginx",pid=747,fd=6),("nginx",pid=746,fd=6),("nginx",pid=745,fd=6),("nginx",pid=744,fd=6),("nginx",pid=743,fd=6),("nginx",pid=742,fd=6),("nginx",pid=741,fd=6),("nginx",pid=740,fd=6),("nginx",pid=739,fd=6),("nginx",pid=738,fd=6),("nginx",pid=737,fd=6),("nginx",pid=736,fd=6),("nginx",pid=735,fd=6),("nginx",pid=734,fd=6),("nginx",pid=733,fd=6),("nginx",pid=732,fd=6),("nginx",pid=731,fd=6),("nginx",pid=730,fd=6),("nginx",pid=729,fd=6),("nginx",pid=728,fd=6),("nginx",pid=727,fd=6),("nginx",pid=726,fd=6))
+LISTEN     0      511       [::]:80                    [::]:*                   users:(("nginx",pid=762,fd=7),("nginx",pid=761,fd=7),("nginx",pid=760,fd=7),("nginx",pid=759,fd=7),("nginx",pid=758,fd=7),("nginx",pid=757,fd=7),("nginx",pid=756,fd=7),("nginx",pid=755,fd=7),("nginx",pid=754,fd=7),("nginx",pid=753,fd=7),("nginx",pid=752,fd=7),("nginx",pid=751,fd=7),("nginx",pid=750,fd=7),("nginx",pid=749,fd=7),("nginx",pid=748,fd=7),("nginx",pid=747,fd=7),("nginx",pid=746,fd=7),("nginx",pid=745,fd=7),("nginx",pid=744,fd=7),("nginx",pid=743,fd=7),("nginx",pid=742,fd=7),("nginx",pid=741,fd=7),("nginx",pid=740,fd=7),("nginx",pid=739,fd=7),("nginx",pid=738,fd=7),("nginx",pid=737,fd=7),("nginx",pid=736,fd=7),("nginx",pid=735,fd=7),("nginx",pid=734,fd=7),("nginx",pid=733,fd=7),("nginx",pid=732,fd=7),("nginx",pid=731,fd=7),("nginx",pid=730,fd=7),("nginx",pid=729,fd=7),("nginx",pid=728,fd=7),("nginx",pid=727,fd=7),("nginx",pid=726,fd=7))
+[root@stbkp01 ~]# systemctl start iptables
+[root@stbkp01 ~]# iptables -A INPUT -p tcp --dport 8096 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+[root@stbkp01 ~]#  iptables -A INPUT -p tcp --dport 8087 -m conntrack --ctstate NEW -j REJECT
+[root@stbkp01 ~]#  iptables -A INPUT -p tcp --dport 8087 -m conntrack --ctstate NEW -j REJECT
+[root@stbkp01 ~]#  iptables -A INPUT -p tcp --dport 8087 -m conntrack --ctstate NEW -j REJECT
+[root@stbkp01 ~]# iptables -L --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+2    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+3    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+4    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+5    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+6    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stbkp01 ~]# iptables -R INPUT 5 -p icmp -j REJECT
+[root@stbkp01 ~]# service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]
+[root@stbkp01 ~]#  iptables -L --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+2    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+3    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+4    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+5    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+6    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stbkp01 ~]# logout
+[clint@stbkp01 ~]$ logout
+Connection to stbkp01 closed.
+thor@jump_host ~$ telnet stbkp01 8087
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ telnet stbkp01 8096
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ 
+thor@jump_host ~$ telnet stbkp01 8096
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ telnet stbkp01 8096
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ ssh clint@stbkp01
+clint@stbkp01's password: 
+Last login: Tue Apr  2 13:11:32 2024 from 172.16.238.2
+[clint@stbkp01 ~]$ sudo su -
+[sudo] password for clint: 
+Last login: Tue Apr  2 13:11:40 UTC 2024 on pts/0
+[root@stbkp01 ~]#  iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+[root@stbkp01 ~]# iptables -L --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+2    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+3    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+4    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+5    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+6    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+7    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:http ctstate NEW,ESTABLISHED
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stbkp01 ~]# service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]
+[root@stbkp01 ~]# iptables -L --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+2    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+3    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:8096 ctstate NEW,ESTABLISHED
+4    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+5    REJECT     icmp --  anywhere             anywhere             reject-with icmp-port-unreachable
+6    REJECT     tcp  --  anywhere             anywhere             tcp dpt:simplifymedia ctstate NEW reject-with icmp-port-unreachable
+7    ACCEPT     tcp  --  anywhere             anywhere             tcp dpt:http ctstate NEW,ESTABLISHED
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stbkp01 ~]# logout
+[clint@stbkp01 ~]$ logout
+Connection to stbkp01 closed.
+thor@jump_host ~$ telnet stbkp01 8096
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ telnet stbkp01 8087
+Trying 172.16.238.16...
+telnet: connect to address 172.16.238.16: Connection refused
+thor@jump_host ~$ telnet stbkp01 80
+Trying 172.16.238.16...
+Connected to stbkp01.
+Escape character is '^]'.
+
