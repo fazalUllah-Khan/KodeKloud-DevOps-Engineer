@@ -1,0 +1,158 @@
+There is an application that needs to be deployed on Kubernetes cluster under Apache web server. The Nautilus application development team has asked the DevOps team to deploy it. We need to develop a template as per requirements mentioned below:
+
+1.	Create a namespace named as httpd-namespace-devops.
+2.	Create a deployment named as httpd-deployment-devops under newly created namespace. For the deployment use httpd image with latest tag only and remember to mention the tag i.e httpd:latest, and make sure replica counts are 2.
+3.	Create a service named as httpd-service-devops under same namespace to expose the deployment, nodePort should be 30004.
+Note: The kubectl utility on jump_host has been configured to work with the kubernetes cluster.
+
+#Solution
+thor@jump_host ~$ kubctl get po
+bash: kubctl: command not found
+thor@jump_host ~$ kubctl get deploy
+bash: kubctl: command not found
+thor@jump_host ~$ kubctl get service
+bash: kubctl: command not found
+thor@jump_host ~$ kubectl create namespace httpd-namespace-devops
+namespace/httpd-namespace-devops created
+thor@jump_host ~$ kubectl get namespace
+NAME                     STATUS   AGE
+default                  Active   37m
+httpd-namespace-devops   Active   17s
+kube-node-lease          Active   37m
+kube-public              Active   37m
+kube-system              Active   37m
+local-path-storage       Active   37m
+thor@jump_host ~$ vi http.yaml -n httpd-namespace-devops
+2 files to edit
+thor@jump_host ~$ cat http.yaml -n httpd-namespace-devops
+     1  apiVersion: v1
+     2  kind: Service
+     3  metadata:
+     4    name: httpd-service-devops
+     5    namespace: httpd-namespace-devops
+     6  spec:
+     7    type: NodePort
+     8    selector:
+     9      app: httpd_app_devops
+    10    ports:
+    11      - port: 80
+    12        targetPort: 80
+    13        nodePort: 30004
+    14  ---
+    15  apiVersion: apps/v1
+    16  kind: Deployment
+    17  metadata:
+    18    name: httpd-deployment-devops
+    19    namespace: httpd-namespace-devops
+    20    labels:
+    21      app: httpd_app_devops
+    22  spec:
+    23    replicas: 2
+    24    selector:
+    25      matchLabels:
+    26        app: httpd_app_devops
+    27    template:
+    28      metadata:
+    29        labels:
+    30          app: httpd_app_devops
+    31      spec:
+    32        containers:
+    33          - name: httpd-container-devops
+    34            image: httpd:latest
+    35            ports:
+    36              - containerPort: 80
+cat: httpd-namespace-devops: No such file or directory
+thor@jump_host ~$ kubectl create -f /tmp/http.yaml
+error: the path "/tmp/http.yaml" does not exist
+thor@jump_host ~$ kubectl create -f /tmp/http.yaml -n httpd-namespace-devops
+error: the path "/tmp/http.yaml" does not exist
+thor@jump_host ~$ cat http.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpd-service-devops
+  namespace: httpd-namespace-devops
+spec:
+  type: NodePort
+  selector:
+    app: httpd_app_devops
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30004
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd-deployment-devops
+  namespace: httpd-namespace-devops
+  labels:
+    app: httpd_app_devops
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: httpd_app_devops
+  template:
+    metadata:
+      labels:
+        app: httpd_app_devops
+    spec:
+      containers:
+        - name: httpd-container-devops
+          image: httpd:latest
+          ports:
+            - containerPort: 80
+thor@jump_host ~$ cd /tmp
+thor@jump_host /tmp$ ls -l
+total 48
+-rw-rw-r-- 1 thor thor 34157 Apr  2 13:36 demofile2.json
+-rwx------ 1 root root   291 Sep  6  2022 ks-script-blvdp0_4
+-rwx------ 1 root root   701 Sep  6  2022 ks-script-ei2y7edh
+thor@jump_host /tmp$ cd ..
+thor@jump_host /$ ls -l
+total 48232
+lrwxrwxrwx    1 root   root          7 Jun 21  2021 bin -> usr/bin
+dr-xr-xr-x    1 root   root       4096 Jun 21  2021 boot
+-rw-r--r--    1 root   root      14632 Sep 19  2022 centos-gpg-keys-8-6.el8.noarch.rpm
+-rw-r--r--    1 root   root      22744 Sep 19  2022 centos-stream-release-8.6-1.el8.noarch.rpm
+-rw-r--r--    1 root   root      20588 Sep 19  2022 centos-stream-repos-8-6.el8.noarch.rpm
+drwxr-xr-x    5 root   root        400 Apr  2 13:25 dev
+drwxr-xr-x    1 root   root       4096 Apr  2 13:25 etc
+drwxr-xr-x    1 root   root       4096 Aug  4  2023 home
+-rwxr-xr-x    1 root   root   49262592 Aug  4  2023 kubectl
+lrwxrwxrwx    1 root   root          7 Jun 21  2021 lib -> usr/lib
+lrwxrwxrwx    1 root   root          9 Jun 21  2021 lib64 -> usr/lib64
+drwx------    1 root   root       4096 Sep  6  2022 lost+found
+drwxr-xr-x    1 root   root       4096 Jun 21  2021 media
+drwxr-xr-x    1 root   root       4096 Jun 21  2021 mnt
+drwxr-xr-x    1 root   root       4096 Jun 21  2021 opt
+dr-xr-xr-x 2485 root   root          0 Apr  2 13:25 proc
+dr-xr-x---    1 root   root       4096 Aug  4  2023 root
+drwxr-xr-x   16 root   root        380 Apr  2 13:25 run
+lrwxrwxrwx    1 root   root          8 Jun 21  2021 sbin -> usr/sbin
+drwxr-xr-x    1 root   root       4096 Jun 21  2021 srv
+dr-xr-xr-x   13 nobody nobody        0 Apr  2 13:25 sys
+drwxrwxrwt    1 root   root       4096 Apr  2 13:25 tmp
+drwxr-xr-x    1 root   root       4096 Sep 19  2022 usr
+drwxr-xr-x    1 root   root       4096 Apr  2 13:25 var
+thor@jump_host /$ cd /root
+bash: cd: /root: Permission denied
+thor@jump_host /$ vi /tmp/http.yaml
+thor@jump_host /$ vi /tmp/http.yaml
+thor@jump_host /$ kubectl create -f /tmp/http.yaml
+service/httpd-service-devops created
+deployment.apps/httpd-deployment-devops created
+thor@jump_host /$ kubectl get po
+No resources found in default namespace.
+thor@jump_host /$ kubectl get po -n httpd-namespace-devops
+NAME                                       READY   STATUS    RESTARTS   AGE
+httpd-deployment-devops-57bc6b9dc7-mnlrz   1/1     Running   0          22s
+httpd-deployment-devops-57bc6b9dc7-rd92g   1/1     Running   0          22s
+thor@jump_host /$ kubectl get deploy -n httpd-namespace-devops
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+httpd-deployment-devops   2/2     2            2           34s
+thor@jump_host /$ kubectl get service -n httpd-namespace-devops
+NAME                   TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+httpd-service-devops   NodePort   10.96.224.94   <none>        80:30004/TCP   44s
+thor@jump_host /$
