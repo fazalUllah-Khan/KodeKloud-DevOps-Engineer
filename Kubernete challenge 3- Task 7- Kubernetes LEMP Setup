@@ -1,0 +1,299 @@
+The Nautilus DevOps team want to deploy a static website on Kubernetes cluster. They are going to use Nginx, phpfpm and MySQL for the database. The team had already gathered the requirements and now they want to make this website live. Below you can find more details:
+
+
+1.	Create some secrets for MySQL.
+
+•	Create a secret named mysql-root-pass wih key/value pairs as below:
+
+name: password
+value: R00t
+
+
+•	Create a secret named mysql-user-pass with key/value pairs as below:
+
+name: username
+value: kodekloud_roy
+
+name: password
+value: dCV3szSGNA
+
+
+•	Create a secret named mysql-db-url with key/value pairs as below:
+
+name: database
+value: kodekloud_db10
+
+
+•	Create a secret named mysql-host with key/value pairs as below:
+
+name: host
+value: mysql-service
+
+
+2.	Create a config map php-config for php.ini with variables_order = "EGPCS" data.
+3.	Create a deployment named lemp-wp.
+
+4.	Create two containers under it. First container must be nginx-php-container using image webdevops/php-nginx:alpine-3-php7 and second container must be mysql-container from image mysql:5.6. Mount php-config configmap in nginx container at /opt/docker/etc/php/php.ini location.
+
+5) Add some environment variables for both containers:
+
+•	MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD and MYSQL_HOST. Take their values from the secrets you created. Please make sure to use env field (do not use envFrom) to define the name-value pair of environment variables.
+
+6) Create a node port type service lemp-service to expose the web application, nodePort must be 30008.
+
+7) Create a service for mysql named mysql-service and its port must be 3306.
+
+8.	We already have a /tmp/index.php file on jump_host server.
+
+•	Copy this file into the nginx container under document root i.e /app and replace the dummy values for mysql related variables with the environment variables you have set for mysql related parameters. Please make sure you do not hard code the mysql related details in this file, you must use the environment variables to fetch those values.
+
+•	Once done, you must be able to access this website using Website button on the top bar, please note that you should see Connected successfully message while accessing this page.
+
+Note: The kubectl on jump_host has been configured to work with the kubernetes cluster.
+
+# Solution
+thor@jump_host ~$ kubectl create secret generic mysql-root-pass --from-literal=password=R00t
+secret/mysql-root-pass created
+thor@jump_host ~$ kubectl create secret generic mysql-user-pass --from-literal=username=kodekloud_sam --from-literal=password=BruCStnMT5
+secret/mysql-user-pass created
+thor@jump_host ~$ kubectl create secret generic mysql-db-url --from-literal=database=kodekloud_db7
+secret/mysql-db-url created
+thor@jump_host ~$ kubectl create secret generic mysql-host --from-literal=host=mysql-service
+secret/mysql-host created
+thor@jump_host ~$ kubectl get secret
+NAME              TYPE     DATA   AGE
+mysql-db-url      Opaque   1      20s
+mysql-host        Opaque   1      9s
+mysql-root-pass   Opaque   1      65s
+mysql-user-pass   Opaque   2      33s
+thor@jump_host ~$ vi php.ini
+thor@jump_host ~$ cat php.ini
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-config
+data:
+  php.ini : |
+    variables_order = "EGPCS"
+thor@jump_host ~$ kubectl create cm php-config --from-file=php.ini
+configmap/php-config created
+thor@jump_host ~$ cat php.ini
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-config
+data:
+  php.ini : |
+    variables_order = "EGPCS"
+thor@jump_host ~$ kubectl get cm
+NAME               DATA   AGE
+kube-root-ca.crt   1      67m
+php-config         1      21s
+thor@jump_host ~$ kubectl create deployment lemp-wp --image webdevops/php-nginx:alpine-3-php7 --dry-run=client -o yaml > lemp-wp.yaml
+thor@jump_host ~$ vi lemp-wp.yaml
+thor@jump_host ~$ cat lemp-wp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lemp-wp
+  name: lemp-wp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lemp-wp
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: lemp-wp
+    spec:
+      volumes:
+      - name: ini
+        configMap:
+          name: php-config
+          items:            
+          - key: php.ini
+            path: php.ini
+      containers:
+      - image: webdevops/php-nginx:alpine-3-php7
+        name: nginx-php-container
+        env: &environment               
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-pass
+              key: password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-db-url
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass 
+              key: password
+        - name: MYSQL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mysql-host 
+              key: host
+        volumeMounts:
+        - name: ini
+          mountPath: /opt/docker/etc/php/php.ini
+          subPath: php.ini
+      - image: mysql:5.6
+        name: mysql-container
+        env: *environment  
+thor@jump_host ~$ kubectl create -f lemp-wp.yaml
+deployment.apps/lemp-wp created
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           8s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           15s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           18s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           21s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           24s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   0/1     1            0           26s
+thor@jump_host ~$ kubectl get deploy
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+lemp-wp   1/1     1            1           35s
+thor@jump_host ~$ kubectl get po
+NAME                       READY   STATUS    RESTARTS   AGE
+lemp-wp-65d4cb86f7-bgx6v   2/2     Running   0          43s
+thor@jump_host ~$ kubectl expose deployment lemp-wp --type=NodePort --port=80 --name=lemp-service --dry-run=client -o yaml > lemp-service.yaml
+thor@jump_host ~$ vi lemp-service.yamlthor@jump_host ~$ cat lemp-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: lemp-wp
+  name: lemp-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30008
+  selector:
+    app: lemp-wp
+  type: NodePort
+
+thor@jump_host ~$ k create -f lemp-service.yaml
+service/lemp-service created
+thor@jump_host ~$ k expose deployment lemp-wp --port 3306 --target-port 3306 --name mysql-service/mysql-service exposed
+Error from server (Invalid): Service "mysql-service/mysql-service" is invalid: metadata.name: Invalid value: "mysql-service/mysql-service": a DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?')
+Error from server (NotFound): deployments.apps "exposed" not found
+thor@jump_host ~$ kubectl expose deployment lemp-wp --name=mysql-service --port=3306 service/mysql-service exposed
+error: there is no need to specify a resource type as a separate argument when passing arguments in resource/name form (e.g. 'kubectl get resource/<resource_name>' instead of 'kubectl get resource resource/<resource_name>'
+thor@jump_host ~$ kubectl expose deployment lemp-wp --name=mysql-service --port=3306 service/mysql-service exposed
+thor@jump_host ~$ kubectl get svc
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        77m
+lemp-service    NodePort    10.96.179.7     <none>        80:30008/TCP   2m53s
+mysql-service   ClusterIP   10.96.121.208   <none>        3306/TCP       12s
+thor@jump_host ~$ kubectl get po
+NAME                       READY   STATUS    RESTARTS   AGE
+lemp-wp-65d4cb86f7-bgx6v   2/2     Running   0          6m8s
+thor@jump_host ~$ kubectl get -A
+You must specify the type of resource to get. Use "kubectl api-resources" for a complete list of supported resources.
+
+error: Required resource not specified.
+Use "kubectl explain <resource>" for a detailed description of that resource (e.g. kubectl explain pods).
+See 'kubectl get -h' for help and examples
+thor@jump_host ~$ kubectl get all
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/lemp-wp-65d4cb86f7-bgx6v   2/2     Running   0          6m25s
+
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        78m
+service/lemp-service    NodePort    10.96.179.7     <none>        80:30008/TCP   3m30s
+service/mysql-service   ClusterIP   10.96.121.208   <none>        3306/TCP       49s
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/lemp-wp   1/1     1            1           6m25s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/lemp-wp-65d4cb86f7   1         1         1       6m25s
+thor@jump_host ~$ kubectl cp /tmp/index.php lemp-wp-65d4cb86f7-bgx6v/app -c nginx-php-container
+error: one of src or dest must be a remote file specification
+thor@jump_host ~$ kubectl cp /tmp/index.php lemp-wp-65d4cb86f7-bgx6v:/app -c nginx-php-container
+thor@jump_host ~$ kubectl exec -it lemp-wp-65d4cb86f7-bgx6 -c nginx-php-container --sh
+error: unknown flag: --sh
+See 'kubectl exec --help' for usage.
+thor@jump_host ~$ kubectl exec -it lemp-wp-65d4cb86f7-bgx6 -c nginx-php-container -- sh
+Error from server (NotFound): pods "lemp-wp-65d4cb86f7-bgx6" not found
+thor@jump_host ~$ kubectl exec -it lemp-wp-65d4cb86f7-bgx6v -c nginx-php-container -- sh
+/ # cd /app
+/app # ls
+index.php
+/app # cat index.php
+<?php
+$dbname = 'dbname';
+$dbuser = 'dbuser';
+$dbpass = 'dbpass';
+$dbhost = 'dbhost';
+
+$connect = mysqli_connect($dbhost, $dbuser, $dbpass) or die("Unable to Connect to '$dbhost'");
+
+$test_query = "SHOW TABLES FROM $dbname";
+$result = mysqli_query($test_query);
+
+if ($result->connect_error) {
+   die("Connection failed: " . $conn->connect_error);
+}
+  echo "Connected successfully";/app # 
+/app # vi index.php
+/app # cat index.php
+<?php
+$dbname = $_ENV['MYSQL_DATABASE'];
+$dbuser = $_ENV['MYSQL_USER'];
+$dbpass = $_ENV['MYSQL_PASSWORD'];
+$dbhost = $_ENV['MYSQL_HOST'];
+
+$connect = mysqli_connect($dbhost, $dbuser, $dbpass) or die("Unable to Connect to '$dbhost'");
+
+$test_query = "SHOW TABLES FROM $dbname";
+$result = mysqli_query($test_query);
+
+if ($result->connect_error) {
+   die("Connection failed: " . $conn->connect_error);
+}
+  echo "Connected successfully";/app # 
+/app # vi index.php
+/app # cat index.php
+<?php
+$dbname = getenv('MYSQL_DATABASE');
+$dbuser = getenv('MYSQL_USER');
+$dbpass = getenv('MYSQL_PASSWORD');
+$dbhost = getenv('MYSQL_HOST');
+
+$connect = mysqli_connect($dbhost, $dbuser, $dbpass) or die("Unable to Connect to '$dbhost'");
+
+$test_query = "SHOW TABLES FROM $dbname";
+$result = mysqli_query($test_query);
+
+if ($result->connect_error) {
+   die("Connection failed: " . $conn->connect_error);
+}
+  echo "Connected successfully";/app # 
+/app # 
+/app #
