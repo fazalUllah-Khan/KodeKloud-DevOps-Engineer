@@ -1,0 +1,528 @@
+One of the Nautilus DevOps team members was working on to update an existing Kubernetes template. Somehow, he made some mistakes in the template and it is failing while applying. We need to fix this as soon as possible, so take a look into it and make sure you are able to apply it without any issues. Also, do not remove any component from the template like pods/deployments/volumes etc.
+
+/home/thor/mysql_deployment.yml is the template that needs to be fixed.
+
+Note: The kubectl utility on jump_host has been configured to work with the kubernetes cluster.
+
+# Solution
+thor@jump_host ~$ kubectl get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   146m
+thor@jump_host ~$ kubectl get secrets
+NAME              TYPE     DATA   AGE
+mysql-db-url      Opaque   1      2m42s
+mysql-root-pass   Opaque   1      2m43s
+mysql-user-pass   Opaque   2      2m42s
+thor@jump_host ~$ ls -l
+total 4
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:46 mysql_deployment.yml
+thor@jump_host ~$ kubectl create -f mysql_deployment.yml
+Error from server (BadRequest): error when creating "mysql_deployment.yml": Service in version "v1" cannot be handled as a Service: strict decoding error: unknown field "spec.tier"
+[resource mapping not found for name: "mysql-pv" namespace: "" from "mysql_deployment.yml": no matches for kind "PersistentVolume" in version "apps/v1"
+ensure CRDs are installed first, resource mapping not found for name: "mysql-pv-claim" namespace: "" from "mysql_deployment.yml": no matches for kind "PersistentVolumeClaim" in version "apps/v1"
+ensure CRDs are installed first, error parsing mysql_deployment.yml: error converting YAML to JSON: yaml: line 28: mapping values are not allowed in this context]
+thor@jump_host ~$ cp mysql_deployment.yml pv.yml
+thor@jump_host ~$ cp mysql_deployment.yml pvc.yml
+thor@jump_host ~$ cp mysql_deployment.yml service.yml
+thor@jump_host ~$ cp mysql_deployment.yml deploy.yml
+thor@jump_host ~$ ls -l
+total 20
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:53 deploy.yml
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:46 mysql_deployment.yml
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:53 pv.yml
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:53 pvc.yml
+-rw-r--r-- 1 thor thor 2338 Apr  5 14:53 service.yml
+thor@jump_host ~$ vi pv.yml
+thor@jump_host ~$ vi pv.yml
+thor@jump_host ~$ cat pv.yml
+apiVersion: v1 
+kind: PersistentVolume            
+metadata:
+  name: mysql-pv
+  labels: 
+  type: local 
+spec:
+  storageClassName: standard      
+  capacity:
+    storage: 250Mi
+  accessModes: 
+    - ReadWriteOnce
+  hostPath:                       
+  path: "/mnt/data" 
+  persistentVolumeReclaimPolicy: Retain  
+
+thor@jump_host ~$ kubectl create -f pv.yaml
+error: the path "pv.yaml" does not exist
+thor@jump_host ~$ kubectl create -f pv.yml
+Error from server (BadRequest): error when creating "pv.yml": PersistentVolume in version "v1" cannot be handled as a PersistentVolume: strict decoding error: unknown field "metadata.type", unknown field "spec.path"
+thor@jump_host ~$ cat pv.yml
+apiVersion: v1 
+kind: PersistentVolume            
+metadata:
+  name: mysql-pv
+  labels: 
+  type: local 
+spec:
+  storageClassName: standard      
+  capacity:
+    storage: 250Mi
+  accessModes: 
+    - ReadWriteOnce
+  hostPath:                       
+  path: "/mnt/data" 
+  persistentVolumeReclaimPolicy: Retain  
+
+thor@jump_host ~$ cat pv.yml
+apiVersion: v1 
+kind: PersistentVolume            
+metadata:
+  name: mysql-pv
+  labels: 
+  type: local 
+spec:
+  storageClassName: standard      
+  capacity:
+    storage: 250Mi
+  accessModes: 
+    - ReadWriteOnce
+  hostPath:                       
+  path: "/mnt/data" 
+  persistentVolumeReclaimPolicy: Retain  
+
+thor@jump_host ~$ vi pv.yml
+thor@jump_host ~$ kubectl create -f pv.yml
+error: resource mapping not found for name: "mysql-pv" namespace: "" from "pv.yml": no matches for kind "PersistentVolume" in version "app/v1"
+ensure CRDs are installed first
+thor@jump_host ~$ vi pv.yml
+thor@jump_host ~$ kubectl create -f pv.yml
+Error from server (BadRequest): error when creating "pv.yml": PersistentVolume in version "v1" cannot be handled as a PersistentVolume: strict decoding error: unknown field "metadata.type"
+thor@jump_host ~$ vi pv.yml
+thor@jump_host ~$ kubectl create -f pv.yml
+persistentvolume/mysql-pv created
+thor@jump_host ~$ cat pv.yml
+apiVersion: v1 
+kind: PersistentVolume            
+metadata:
+  name: mysql-pv
+  labels: 
+    type: local 
+spec:
+  storageClassName: standard      
+  capacity:
+    storage: 250Mi
+  accessModes: 
+  - ReadWriteOnce
+  hostPath:                       
+    path: "/mnt/data" 
+  persistentVolumeReclaimPolicy: Retain  
+
+thor@jump_host ~$ kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+mysql-pv   250Mi      RWO            Retain           Available           standard                45s
+thor@jump_host ~$ vi pvc.yml
+thor@jump_host ~$ vi pvc.yml
+thor@jump_host ~$ kubectl create -f pvc.yml
+Error from server (BadRequest): error when creating "pvc.yml": PersistentVolumeClaim in version "v1" cannot be handled as a PersistentVolumeClaim: strict decoding error: unknown field "metadata.app"
+thor@jump_host ~$ vi pvc.yml
+thor@jump_host ~$ kubectl create -f pvc.yml
+persistentvolumeclaim/mysql-pv-claim created
+thor@jump_host ~$ cat pvc.yml
+---    
+apiVersion: v1 
+kind: PersistentVolumeClaim 
+metadata:                          
+  name: mysql-pv-claim
+  labels:
+    app: mysql-app 
+spec:                              
+  storageClassName: standard       
+  accessModes: 
+  - ReadWriteOnce                
+  resources:
+    requests: 
+      storage: 250Mi 
+
+thor@jump_host ~$ kubectl get pvc
+NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+mysql-pv-claim   Pending                                      standard       23s
+thor@jump_host ~$ vi service.yml
+thor@jump_host ~$ kubectl create -f service.yml
+service/mysql created
+thor@jump_host ~$ cat service.yml
+
+apiVersion: v1                    
+kind: Service                      
+metadata:
+  name: mysql         
+  labels:             
+    app: mysql-app
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 3306
+      port: 3306
+      nodePort: 30011
+  selector:    
+    app: mysql-app
+    tier: mysql
+    
+
+thor@jump_host ~$ kubectl get svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP          175m
+mysql        NodePort    10.96.85.114   <none>        3306:30011/TCP   21s
+thor@jump_host ~$ vi deploy.yml
+thor@jump_host ~$ kubectl create -f deploy.yml
+Error from server (BadRequest): error when creating "deploy.yml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.selector.tier", unknown field "spec.template.spec.containers[0].env[0].secretKeyRef", unknown field "spec.template.spec.containers[0].env[1].secretKeyRef", unknown field "spec.template.spec.containers[0].images"
+thor@jump_host ~$ vi deploy.yml
+thor@jump_host ~$ kubectl create -f deploy.yml
+Error from server (BadRequest): error when creating "deploy.yml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.selector.app", unknown field "spec.selector.tier", unknown field "spec.template.spec.containers[0].env[0].valueFrom.key", unknown field "spec.template.spec.containers[0].env[0].valueFrom.name", unknown field "spec.template.spec.containers[0].env[1].valueFrom.key", unknown field "spec.template.spec.containers[0].env[1].valueFrom.name", unknown field "spec.template.spec.containers[0].env[2].valueFrom.key", unknown field "spec.template.spec.containers[0].env[2].valueFrom.name", unknown field "spec.template.spec.containers[0].env[3].valueFrom.key", unknown field "spec.template.spec.containers[0].env[3].valueFrom.name", unknown field "spec.template.spec.containers[0].images"
+thor@jump_host ~$ vi deploy.yml
+thor@jump_host ~$ kubectl create -f deploy.yml
+Error from server (BadRequest): error when creating "deploy.yml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.template.spec.containers[0].images"
+thor@jump_host ~$ vi deploy.yml
+thor@jump_host ~$ kubectl create -f deploy.yml
+deployment.apps/mysql-deployment created
+thor@jump_host ~$ cat deploy.yml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql-app
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-app
+        tier: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-pass
+              key: password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-db-url
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+           claimName: mysql-pv-claim
+
+thor@jump_host ~$ kubectl get deploy
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+mysql-deployment   1/1     1            1           58s
+thor@jump_host ~$ kubectl get all
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/mysql-deployment-944888cd8-vmsbm   1/1     Running   0          77s
+
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP          3h12m
+service/mysql        NodePort    10.96.85.114   <none>        3306:30011/TCP   17m
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mysql-deployment   1/1     1            1           77s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/mysql-deployment-944888cd8   1         1         1       77s
+thor@jump_host ~$ kubectl delete deploy mysql-deployment
+deployment.apps "mysql-deployment" deleted
+thor@jump_host ~$ kubectl delete service mysql
+service "mysql" deleted
+thor@jump_host ~$ kubectl get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3h13m
+thor@jump_host ~$ kubectl get pvc
+NAME             STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+mysql-pv-claim   Bound    mysql-pv   250Mi      RWO            standard       23m
+thor@jump_host ~$ kubectl delete mysql-pv-claim
+error: the server doesn't have a resource type "mysql-pv-claim"
+thor@jump_host ~$ kubectl delete pvc mysql-pv-claim
+persistentvolumeclaim "mysql-pv-claim" deleted
+thor@jump_host ~$ kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                    STORAGECLASS   REASON   AGE
+mysql-pv   250Mi      RWO            Retain           Released   default/mysql-pv-claim   standard                33m
+thor@jump_host ~$ kubectl delete pv mysql-pv 
+persistentvolume "mysql-pv" deleted
+thor@jump_host ~$ vi mysql_deployment.yml
+thor@jump_host ~$ cat mysql_deployment.yml
+
+thor@jump_host ~$ vi mysql_deployment.yml
+thor@jump_host ~$ cat pv.yml pvc.yml service.yml deploy.yml >> mysql_deployment.yml
+thor@jump_host ~$ cat mysql_deployment.yml
+
+apiVersion: v1 
+kind: PersistentVolume            
+metadata:
+  name: mysql-pv
+  labels: 
+    type: local 
+spec:
+  storageClassName: standard      
+  capacity:
+    storage: 250Mi
+  accessModes: 
+  - ReadWriteOnce
+  hostPath:                       
+    path: "/mnt/data" 
+  persistentVolumeReclaimPolicy: Retain  
+
+---    
+apiVersion: v1 
+kind: PersistentVolumeClaim 
+metadata:                          
+  name: mysql-pv-claim
+  labels:
+    app: mysql-app 
+spec:                              
+  storageClassName: standard       
+  accessModes: 
+  - ReadWriteOnce                
+  resources:
+    requests: 
+      storage: 250Mi 
+
+
+apiVersion: v1                    
+kind: Service                      
+metadata:
+  name: mysql         
+  labels:             
+    app: mysql-app
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 3306
+      port: 3306
+      nodePort: 30011
+  selector:    
+    app: mysql-app
+    tier: mysql
+    
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql-app
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-app
+        tier: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-pass
+              key: password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-db-url
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+           claimName: mysql-pv-claim
+
+thor@jump_host ~$ kubectl create -f mysql_deployment.yml
+persistentvolume/mysql-pv created
+service/mysql created
+deployment.apps/mysql-deployment created
+thor@jump_host ~$ kubectl get all
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/mysql-deployment-944888cd8-n8h2h   0/1     Pending   0          7s
+
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP          3h21m
+service/mysql        NodePort    10.96.25.252   <none>        3306:30011/TCP   8s
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mysql-deployment   0/1     1            0           8s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/mysql-deployment-944888cd8   1         1         0       9s
+thor@jump_host ~$ kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+mysql-pv   250Mi      RWO            Retain           Available           standard                17s
+thor@jump_host ~$ kubectl get pvc
+No resources found in default namespace.
+thor@jump_host ~$ kubectl get pvc
+No resources found in default namespace.
+thor@jump_host ~$ cat pv.yml pvc.yml service.yml deploy.yml pvc.yml >> mysql_deployment.yml
+thor@jump_host ~$ kubectl create -f mysql_deployment.yml
+persistentvolumeclaim/mysql-pv-claim created
+Error from server (AlreadyExists): error when creating "mysql_deployment.yml": persistentvolumes "mysql-pv" already exists
+Error from server (Invalid): error when creating "mysql_deployment.yml": Service "mysql" is invalid: spec.ports[0].nodePort: Invalid value: 30011: provided port is already allocated
+Error from server (AlreadyExists): error when creating "mysql_deployment.yml": persistentvolumes "mysql-pv" already exists
+Error from server (Invalid): error when creating "mysql_deployment.yml": Service "mysql" is invalid: spec.ports[0].nodePort: Invalid value: 30011: provided port is already allocated
+Error from server (AlreadyExists): error when creating "mysql_deployment.yml": deployments.apps "mysql-deployment" already exists
+thor@jump_host ~$ kubectl get pvc
+NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+mysql-pv-claim   Pending                                      standard       10s
+thor@jump_host ~$
+thor@jump_host ~$ cat mysql_deployment.yml
+
+---
+apiVersion: v1 
+kind: PersistentVolume 
+metadata:
+  name: mysql-pv
+  labels:
+    type: local
+spec:
+  storageClassName: standard       
+  capacity:
+    storage: 250Mi
+  accessModes: 
+     -  ReadWriteOnce 
+  hostPath:                       
+    path: "/mnt/data"
+  persistentVolumeReclaimPolicy: Retain  
+
+---
+apiVersion: v1 
+kind: PersistentVolumeClaim       
+metadata:                          
+  name: mysql-pv-claim
+  labels:
+    type: mysql-app 
+spec:                               
+  storageClassName: standard       
+  accessModes: 
+  - ReadWriteOnce             
+  resources:
+    requests:
+      storage: 250Mi 
+
+---
+apiVersion: v1                    
+kind: Service                      
+metadata:
+  name: mysql         
+  labels:             
+    app: mysql-app  
+spec:
+  type: NodePort
+  ports:
+    - targetPort: 3306
+      port: 3306
+      nodePort: 30011
+  selector:                       
+    app: mysql_app
+    tier: mysql
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql-app
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-app
+        tier: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-pass
+              key: password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-db-url
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-user-pass
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+           claimName: mysql-pv-claim
