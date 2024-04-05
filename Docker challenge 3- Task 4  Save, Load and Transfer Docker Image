@@ -1,0 +1,104 @@
+
+One of the DevOps team members was working on to create a new custom docker image on App Server 1 in Stratos DC. He is done with his changes and image is saved on same server with name ecommerce:nautilus. Recently a requirement has been raised by a team to use that image for testing, but the team wants to test the same on App Server 3. So we need to provide them that image on App Server 3 in Stratos DC.
+
+a. On App Server 1 save the image ecommerce:nautilus in an archive.
+
+b. Transfer the image archive to App Server 3.
+
+c. Load that image archive on App Server 3 with same name and tag which was used on App Server 1.
+
+Note: Docker is already installed on both servers; however, if its service is down please make sure to start it.
+
+
+# Solution:
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:MJxn8sip7B/pjeBk9Gz3BfAHLHfB50vwJdf9cJZBli8.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ecommerce           nautilus            1af062bdad5c        4 minutes ago       128MB
+ubuntu              latest              ca2b0f26964c        5 weeks ago         77.9MB
+[root@stapp01 ~]# docker save -o /tmp/ecommerce.tar ecommerce:nautilus
+[root@stapp01 ~]# ls -l /tmp
+total 127180
+-rwxr-xr-x 1 root root       239 Apr  5 22:14 docker_container.sh
+-rw------- 1 root root 130213888 Apr  5 22:20 ecommerce.tar
+-rwx------ 1 root root       291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root root       701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp01 ~]# scp /tmp/ecommerce.tar banner@stapp03:/tmp
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:HWmcKSxTo0gol8hlH3s2VoI0WTVlFzJiN/EMnJ0FsYI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+ecommerce.tar                                                       100%  124MB 168.6MB/s   00:00    
+[root@stapp01 ~]# logout
+[tony@stapp01 ~]$ logout
+Connection to stapp01 closed.
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:HWmcKSxTo0gol8hlH3s2VoI0WTVlFzJiN/EMnJ0FsYI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# ls -l /tmp
+total 127176
+-rw------- 1 banner banner 130213888 Apr  5 22:21 ecommerce.tar
+-rwx------ 1 root   root         291 Feb  7  2023 ks-script-kzk1nzfd
+-rwx------ 1 root   root         701 Feb  7  2023 ks-script-l36mq90h
+[root@stapp03 ~]# systemctl start docker
+[root@stapp03 ~]# systemctl status docker
+● docker.service - Docker Application Container Engine
+   Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; vendor preset: disabled)
+   Active: active (running) since Fri 2024-04-05 22:14:18 UTC; 9min ago
+     Docs: https://docs.docker.com
+ Main PID: 520 (dockerd)
+    Tasks: 35
+   Memory: 50.0M
+   CGroup: /docker/e65cdbdc1290f11a2b1f85e121055c355489098558654a40c07337f1f32cff87/system.slice/dock>
+           └─520 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com dockerd[520]: time="2024-04-05T22:14:18.469331856Z" l>
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com dockerd[520]: time="2024-04-05T22:14:18.754445975Z" l>
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Got notification message >
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Changed start -> running
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Job docker.service/start >
+Apr 05 22:14:18 stapp03.stratos.xfusioncorp.com systemd[1]: Started Docker Application Container Engi>
+Apr 05 22:23:42 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Trying to enqueue job doc>
+Apr 05 22:23:42 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Installed new job docker.>
+Apr 05 22:23:42 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Enqueued job docker.servi>
+Apr 05 22:23:42 stapp03.stratos.xfusioncorp.com systemd[1]: docker.service: Job docker.service/start >
+
+[root@stapp03 ~]# docker load -i ecommerce.tar
+open ecommerce.tar: no such file or directory
+[root@stapp03 ~]# docker load -i /tmp/ecommerce.tar
+5498e8c22f69: Loading layer  80.41MB/80.41MB
+7a03b13701fb: Loading layer  49.79MB/49.79MB
+Loaded image: ecommerce:nautilus
+[root@stapp03 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ecommerce           nautilus            1af062bdad5c        10 minutes ago      128MB
+[root@stapp03 ~]# 
