@@ -1,0 +1,338 @@
+There is an iron gallery app that the Nautilus DevOps team was developing. They have recently customized the app and are going to deploy the same on the Kubernetes cluster. Below you can find more details:
+
+
+1.	Create a namespace iron-namespace-nautilus
+2.	Create a deployment iron-gallery-deployment-nautilus for iron gallery under the same namespace you created.
+:- Labels run should be iron-gallery.
+:- Replicas count should be 1.
+:- Selector's matchLabels run should be iron-gallery.
+:- Template labels run should be iron-gallery under metadata.
+:- The container should be named as iron-gallery-container-nautilus, use kodekloud/irongallery:2.0 image ( use exact image name / tag ).
+:- Resources limits for memory should be 100Mi and for CPU should be 50m.
+:- First volumeMount name should be config, its mountPath should be /usr/share/nginx/html/data.
+:- Second volumeMount name should be images, its mountPath should be /usr/share/nginx/html/uploads.
+:- First volume name should be config and give it emptyDir and second volume name should be images, also give it emptyDir.
+3.	Create a deployment iron-db-deployment-nautilus for iron db under the same namespace.
+:- Labels db should be mariadb.
+:- Replicas count should be 1.
+:- Selector's matchLabels db should be mariadb.
+:- Template labels db should be mariadb under metadata.
+:- The container name should be iron-db-container-nautilus, use kodekloud/irondb:2.0 image ( use exact image name / tag ).
+:- Define environment, set MYSQL_DATABASE its value should be database_host, set MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD value should be with some complex passwords for DB connections, and MYSQL_USER value should be any custom user ( except root ).
+:- Volume mount name should be db and its mountPath should be /var/lib/mysql. Volume name should be db and give it an emptyDir.
+4.	Create a service for iron db which should be named iron-db-service-nautilus under the same namespace. Configure spec as selector's db should be mariadb. Protocol should be TCP, port and targetPort should be 3306 and its type should be ClusterIP.
+5.	Create a service for iron gallery which should be named iron-gallery-service-nautilus under the same namespace. Configure spec as selector's run should be iron-gallery. Protocol should be TCP, port and targetPort should be 80, nodePort should be 32678 and its type should be NodePort.
+
+Note:
+
+1.	We don't need to make connection b/w database and front-end now, if the installation page is coming up it should be enough for now.
+2.	The kubectl on jump_host has been configured to work with the kubernetes cluster.
+
+# Solution:
+Last login: Fri Apr  5 16:24:51 UTC 2024 on pts/0
+thor@jump_host ~$ k get ns
+NAME                 STATUS   AGE
+default              Active   109m
+kube-node-lease      Active   109m
+kube-public          Active   109m
+kube-system          Active   109m
+local-path-storage   Active   109m
+thor@jump_host ~$ k get po
+No resources found in default namespace.
+thor@jump_host ~$ k get deploy
+No resources found in default namespace.
+thor@jump_host ~$ k get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   109m
+thor@jump_host ~$ k create ns iron-namespace-nautilus
+namespace/iron-namespace-nautilus created
+thor@jump_host ~$ k get ns
+NAME                      STATUS   AGE
+default                   Active   110m
+iron-namespace-nautilus   Active   16s
+kube-node-lease           Active   110m
+kube-public               Active   110m
+kube-system               Active   110m
+local-path-storage        Active   110m
+thor@jump_host ~$ k get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   110m
+thor@jump_host ~$ k get all -n iron-namespace-nautilus
+No resources found in iron-namespace-nautilus namespace.
+thor@jump_host ~$ vi service.yaml
+thor@jump_host ~$ kubectl create -f service.yaml
+service/iron-gallery-service-nautilus created
+service/iron-db-service-nautilus created
+thor@jump_host ~$ cat service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iron-gallery-service-nautilus
+  namespace: iron-namespace-nautilus
+spec:
+  selector:
+   run: iron-gallery
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 32678
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iron-db-service-nautilus 
+  namespace: iron-namespace-nautilus
+spec:
+  selector:
+    db: mariadb
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+thor@jump_host ~$ kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   114m
+thor@jump_host ~$ kubectl get svc -n iron-namespace-nautilus
+NAME                            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+iron-db-service-nautilus        ClusterIP   10.96.139.76   <none>        3306/TCP       47s
+iron-gallery-service-nautilus   NodePort    10.96.78.101   <none>        80:32678/TCP   47s
+thor@jump_host ~$ vi deploy.yaml
+thor@jump_host ~$ cat deploy.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iron-gallery-deployment-nautilus
+  labels:
+    run : iron-gallery
+  namespace: iron-namespace-nautilus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run : iron-gallery
+  template:
+    metadata:
+      labels:
+        run : iron-gallery
+    spec:
+      containers:
+      - name:  iron-gallery-container-nautilus
+        image: kodekloud/irongallery:2.0
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "100Mi"
+            cpu: "50m"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/nginx/html/data
+        - name: images
+          mountPath: /usr/share/nginx/html/uploads
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: images
+          emptyDir: {}
+---  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iron-db-deployment-nautilus
+  labels:
+    db: mariadb
+  namespace: iron-namespace-nautilus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      db: mariadb
+  template:
+    metadata:
+      labels:
+        db: mariadb
+    spec:
+      containers:
+      - name: iron-db-container-nautilus
+        image: kodekloud/irondb:2.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_DATABASE
+          value: database_host
+        - name: MYSQL_ROOT_PASSWORD
+          value: MYSQL_PASSWORD@123
+        - name: MYSQL_PASSWORD
+          value: MYSQL_PASSWORD@123
+        - name: MYSQL_USER
+          value: sql_user
+        volumeMounts:
+        - name: db 
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: db
+        emptyDir: {}
+thor@jump_host ~$ kubectl create -f deploy.yaml
+deployment.apps/iron-gallery-deployment-nautilus created
+deployment.apps/iron-db-deployment-nautilus created
+thor@jump_host ~$ kubectl get deploy -n iron-namespace-nautilus
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+iron-db-deployment-nautilus        1/1     1            1           26s
+iron-gallery-deployment-nautilus   0/1     1            0           26s
+thor@jump_host ~$ ^C
+thor@jump_host ~$ ^C
+thor@jump_host ~$ kubectl get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   123m
+thor@jump_host ~$ kubectl get all -n iron-namespace-nautilus
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/iron-db-deployment-nautilus-7d8d59c7f8-vtzvs        1/1     Running   0          5m28s
+pod/iron-gallery-deployment-nautilus-656db68668-v75bx   1/1     Running   0          5m28s
+
+NAME                                    TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+service/iron-db-service-nautilus        ClusterIP   10.96.139.76   <none>        3306/TCP       9m43s
+service/iron-gallery-service-nautilus   NodePort    10.96.78.101   <none>        80:32678/TCP   9m43s
+
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/iron-db-deployment-nautilus        1/1     1            1           5m28s
+deployment.apps/iron-gallery-deployment-nautilus   1/1     1            1           5m28s
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/iron-db-deployment-nautilus-7d8d59c7f8        1         1         1       5m28s
+replicaset.apps/iron-gallery-deployment-nautilus-656db68668   1         1         1       5m28s
+thor@jump_host ~$ kubectl log pod/iron-db-deployment-nautilus-7d8d59c7f8-vtzvs -n iron-namespace-nautilus
+error: unknown command "log" for "kubectl"
+
+Did you mean this?
+        top
+        logs
+thor@jump_host ~$ kubectl logs pod/iron-db-deployment-nautilus-7d8d59c7f8-vtzvs -n iron-namespace-nautilus
+Initializing database
+
+
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MariaDB root USER !
+To do so, start the server, then issue the following commands:
+
+'/usr/bin/mysqladmin' -u root password 'new-password'
+'/usr/bin/mysqladmin' -u root -h  password 'new-password'
+
+Alternatively you can run:
+'/usr/bin/mysql_secure_installation'
+
+which will also give you the option of removing the test
+databases and anonymous user created by default.  This is
+strongly recommended for production servers.
+
+See the MariaDB Knowledgebase at http://mariadb.com/kb or the
+MySQL manual for more instructions.
+
+Please report any problems at http://mariadb.org/jira
+
+The latest information about MariaDB is available at http://mariadb.org/.
+You can find additional information about the MySQL part at:
+http://dev.mysql.com
+Consider joining MariaDB's strong and vibrant community:
+https://mariadb.org/get-involved/
+
+Database initialized
+MySQL init process in progress...
+2024-04-05 16:47:59 0 [Note] mysqld (mysqld 10.4.8-MariaDB-1:10.4.8+maria~bionic) starting as process 160 ...
+2024-04-05 16:47:59 0 [Note] InnoDB: Using Linux native AIO
+2024-04-05 16:47:59 0 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins
+2024-04-05 16:47:59 0 [Note] InnoDB: Uses event mutexes
+2024-04-05 16:47:59 0 [Note] InnoDB: Compressed tables use zlib 1.2.11
+2024-04-05 16:47:59 0 [Note] InnoDB: Number of pools: 1
+2024-04-05 16:47:59 0 [Note] InnoDB: Using SSE2 crc32 instructions
+2024-04-05 16:47:59 0 [Note] mysqld: O_TMPFILE is not supported on /tmp (disabling future attempts)
+2024-04-05 16:47:59 0 [Note] InnoDB: Initializing buffer pool, total size = 256M, instances = 1, chunk size = 128M
+2024-04-05 16:48:00 0 [Note] InnoDB: Completed initialization of buffer pool
+2024-04-05 16:48:00 0 [Note] InnoDB: If the mysqld execution user is authorized, page cleaner thread priority can be changed. See the man page of setpriority().
+2024-04-05 16:48:00 0 [Note] InnoDB: 128 out of 128 rollback segments are active.
+2024-04-05 16:48:00 0 [Note] InnoDB: Creating shared tablespace for temporary tables
+2024-04-05 16:48:00 0 [Note] InnoDB: Setting file './ibtmp1' size to 12 MB. Physically writing the file full; Please wait ...
+2024-04-05 16:48:00 0 [Note] InnoDB: File './ibtmp1' size is now 12 MB.
+2024-04-05 16:48:00 0 [Note] InnoDB: 10.4.8 started; log sequence number 139827; transaction id 21
+2024-04-05 16:48:00 0 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+2024-04-05 16:48:00 0 [Note] Plugin 'FEEDBACK' is disabled.
+2024-04-05 16:48:00 0 [Warning] 'user' entry 'root@iron-db-deployment-nautilus-7d8d59c7f8-vtzvs' ignored in --skip-name-resolve mode.
+2024-04-05 16:48:00 0 [Warning] 'user' entry '@iron-db-deployment-nautilus-7d8d59c7f8-vtzvs' ignored in --skip-name-resolve mode.
+2024-04-05 16:48:00 0 [Warning] 'proxies_priv' entry '@% root@iron-db-deployment-nautilus-7d8d59c7f8-vtzvs' ignored in --skip-name-resolve mode.
+2024-04-05 16:48:00 0 [Note] Reading of all Master_info entries succeeded
+2024-04-05 16:48:00 0 [Note] Added new Master_info '' to hash table
+2024-04-05 16:48:00 0 [Note] mysqld: ready for connections.
+Version: '10.4.8-MariaDB-1:10.4.8+maria~bionic'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  mariadb.org binary distribution
+2024-04-05 16:48:00 0 [Note] InnoDB: Buffer pool(s) load completed at 240405 16:48:00
+Warning: Unable to load '/usr/share/zoneinfo/leap-seconds.list' as time zone. Skipping it.
+2024-04-05 16:48:18 10 [Warning] 'proxies_priv' entry '@% root@iron-db-deployment-nautilus-7d8d59c7f8-vtzvs' ignored in --skip-name-resolve mode.
+
+2024-04-05 16:48:18 0 [Note] mysqld (initiated by: unknown): Normal shutdown
+2024-04-05 16:48:18 0 [Note] Event Scheduler: Purging the queue. 0 events
+2024-04-05 16:48:18 0 [Note] InnoDB: FTS optimize thread exiting.
+2024-04-05 16:48:18 0 [Note] InnoDB: Starting shutdown...
+2024-04-05 16:48:18 0 [Note] InnoDB: Dumping buffer pool(s) to /var/lib/mysql/ib_buffer_pool
+2024-04-05 16:48:18 0 [Note] InnoDB: Buffer pool(s) dump completed at 240405 16:48:18
+2024-04-05 16:48:20 0 [Note] InnoDB: Shutdown completed; log sequence number 20273603; transaction id 14612
+2024-04-05 16:48:20 0 [Note] InnoDB: Removed temporary tablespace data file: "ibtmp1"
+2024-04-05 16:48:20 0 [Note] mysqld: Shutdown complete
+
+
+MySQL init process done. Ready for start up.
+
+2024-04-05 16:48:20 0 [Note] mysqld (mysqld 10.4.8-MariaDB-1:10.4.8+maria~bionic) starting as process 1 ...
+2024-04-05 16:48:20 0 [Note] InnoDB: Using Linux native AIO
+2024-04-05 16:48:20 0 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins
+2024-04-05 16:48:20 0 [Note] InnoDB: Uses event mutexes
+2024-04-05 16:48:20 0 [Note] InnoDB: Compressed tables use zlib 1.2.11
+2024-04-05 16:48:20 0 [Note] InnoDB: Number of pools: 1
+2024-04-05 16:48:20 0 [Note] InnoDB: Using SSE2 crc32 instructions
+2024-04-05 16:48:20 0 [Note] mysqld: O_TMPFILE is not supported on /tmp (disabling future attempts)
+2024-04-05 16:48:20 0 [Note] InnoDB: Initializing buffer pool, total size = 256M, instances = 1, chunk size = 128M
+2024-04-05 16:48:20 0 [Note] InnoDB: Completed initialization of buffer pool
+2024-04-05 16:48:20 0 [Note] InnoDB: If the mysqld execution user is authorized, page cleaner thread priority can be changed. See the man page of setpriority().
+2024-04-05 16:48:20 0 [Note] InnoDB: 128 out of 128 rollback segments are active.
+2024-04-05 16:48:20 0 [Note] InnoDB: Creating shared tablespace for temporary tables
+2024-04-05 16:48:20 0 [Note] InnoDB: Setting file './ibtmp1' size to 12 MB. Physically writing the file full; Please wait ...
+2024-04-05 16:48:20 0 [Note] InnoDB: File './ibtmp1' size is now 12 MB.
+2024-04-05 16:48:20 0 [Note] InnoDB: 10.4.8 started; log sequence number 20273603; transaction id 14612
+2024-04-05 16:48:20 0 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+2024-04-05 16:48:20 0 [Note] Plugin 'FEEDBACK' is disabled.
+2024-04-05 16:48:20 0 [Note] Server socket created on IP: '::'.
+2024-04-05 16:48:20 0 [Warning] 'proxies_priv' entry '@% root@iron-db-deployment-nautilus-7d8d59c7f8-vtzvs' ignored in --skip-name-resolve mode.
+2024-04-05 16:48:20 0 [Note] Reading of all Master_info entries succeeded
+2024-04-05 16:48:20 0 [Note] Added new Master_info '' to hash table
+2024-04-05 16:48:20 0 [Note] mysqld: ready for connections.
+Version: '10.4.8-MariaDB-1:10.4.8+maria~bionic'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  mariadb.org binary distribution
+2024-04-05 16:48:20 0 [Note] InnoDB: Buffer pool(s) load completed at 240405 16:48:20
+thor@jump_host ~$ kubectl logs pod/iron-gallery-deployment-nautilus-656db68668-v75bx -n iron-namespace-nautilus
+2024-04-05 18:48:14,449 WARN No file matches via include "/etc/supervisor/conf.d/*.conf"
+2024-04-05 18:48:14,449 INFO Set uid to user 0 succeeded
+2024-04-05 18:48:14,550 INFO RPC interface 'supervisor' initialized
+2024-04-05 18:48:14,550 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2024-04-05 18:48:14,645 INFO supervisord started with pid 1
+2024-04-05 18:48:15,744 INFO spawned: 'php-fpm' with pid 59
+2024-04-05 18:48:15,746 INFO spawned: 'nginx' with pid 60
+2024/04/05 18:48:16 [notice] 60#60: using the "epoll" event method
+2024/04/05 18:48:16 [notice] 60#60: nginx/1.17.0
+2024/04/05 18:48:16 [notice] 60#60: built by gcc 8.2.0 (Alpine 8.2.0) 
+2024/04/05 18:48:16 [notice] 60#60: OS: Linux 5.4.0-1106-gcp
+2024/04/05 18:48:16 [notice] 60#60: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2024/04/05 18:48:16 [notice] 60#60: start worker processes
+2024/04/05 18:48:16 [notice] 60#60: start worker process 61
+2024-04-05 18:48:16,649 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-04-05 18:48:17,650 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+10.244.0.1 - - [05/Apr/2024:18:49:11 +0200] "GET / HTTP/1.1" 200 68734 "https://05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:49:11 +0200] "GET /dist/main.css HTTP/1.1" 200 66861 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:49:11 +0200] "GET /dist/user.css HTTP/1.1" 200 0 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:49:11 +0200] "GET /dist/main.js HTTP/1.1" 200 387172 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:49:11 +0200] "POST /php/index.php HTTP/1.1" 200 22 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:50:08 +0200] "POST /php/index.php HTTP/1.1" 200 40 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:50:57 +0200] "POST /php/index.php HTTP/1.1" 200 40 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:51:49 +0200] "POST /php/index.php HTTP/1.1" 200 40 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+10.244.0.1 - - [05/Apr/2024:18:54:23 +0200] "POST /php/index.php HTTP/1.1" 200 40 "https://32678-port-05f2b4b608704981.labs.kodekloud.com/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+thor@jump_host ~$
+
