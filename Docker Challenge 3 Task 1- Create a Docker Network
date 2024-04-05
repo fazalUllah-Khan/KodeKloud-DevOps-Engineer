@@ -1,0 +1,71 @@
+The Nautilus DevOps team needs to set up several docker environments for different applications. One of the team members has been assigned a ticket where he has been asked to create some docker networks to be used later. Complete the task based on the following ticket description:
+
+a. Create a docker network named as blog on App Server 3 in Stratos DC.
+
+b. Configure it to use macvlan drivers.
+
+c. Set it to use subnet 192.168.30.0/24 and iprange 192.168.30.3/24.
+
+# Solution:
+thor@jump_host ~$ 
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:OzwJam15GWcofZh2U9A44VgqViGlMGmcB+ZB+2UiDyE.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+835a5c3cb713        bridge              bridge              local
+f357115284ca        host                host                local
+a1349eb9b357        none                null                local
+[root@stapp03 ~]# docker network create -d macvlan --subnet=192.168.30.0/24 --ip-range=192.168.30.3/24 blog
+17c6e78b61985100a1c8ac35ecdbed4af2b07a8ee9b40dfe7fd1b4642c6ea967
+[root@stapp03 ~]# docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+17c6e78b6198        blog                macvlan             local
+835a5c3cb713        bridge              bridge              local
+f357115284ca        host                host                local
+a1349eb9b357        none                null                local
+[root@stapp03 ~]# docker network inspect blog
+[
+    {
+        "Name": "blog",
+        "Id": "17c6e78b61985100a1c8ac35ecdbed4af2b07a8ee9b40dfe7fd1b4642c6ea967",
+        "Created": "2024-04-05T21:46:45.411331655Z",
+        "Scope": "local",
+        "Driver": "macvlan",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "192.168.30.0/24",
+                    "IPRange": "192.168.30.3/24"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+[root@stapp03 ~]# 
