@@ -1,0 +1,50 @@
+The Nautilus DevOps team is testing applications containerization, which is supposed to be migrated on docker container-based environments soon. In today's stand-up meeting one of the team members has been assigned a task to create and test a docker container with certain requirements. Below are more details:
+
+a. On App Server 2 in Stratos DC pull nginx image (preferably latest tag but others should work too).
+
+b. Create a new container with name blog from the image you just pulled.
+
+c. Map the host volume /opt/dba with container volume /tmp. There is an sample.txt file present on same server under /tmp; copy that file to /opt/dba. Also please keep the container in running state.
+
+# Solution:
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:i/1OKB4/aY+rLbQZHI4bKl1s7blPFsV6/TFQyvu0FEI.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@stapp02 ~]# docker pull nginx:latest
+latest: Pulling from library/nginx
+8a1e25ce7c4f: Pull complete 
+e78b137be355: Pull complete 
+39fc875bd2b2: Pull complete 
+035788421403: Pull complete 
+87c3fb37cbf2: Pull complete 
+c5cdd1ce752d: Pull complete 
+33952c599532: Pull complete 
+Digest: sha256:6db391d1c0cfb30588ba0bf72ea999404f2764febf0f1f196acd5867ac7efa7e
+Status: Downloaded newer image for nginx:latest
+docker.io/library/nginx:latest
+[root@stapp02 ~]# cp /tmp/sample.txt /opt/dba
+[root@stapp02 ~]# docker run --name blog -v /opt/dba:/tmp -d -it nginx:latest
+82ca522f312503a0bc31205ad2249252c0fea61749f6212dc83c45892789056f
+[root@stapp02 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+82ca522f3125        nginx:latest        "/docker-entrypoint.…"   38 seconds ago      Up 34 seconds       80/tcp              blog
+[root@stapp02 ~]# docker exec -it 82ca522f3125 /bin/bash
+root@82ca522f3125:/# ls -l /tmp
+total 4
+-rw-r--r-- 1 root root 23 Apr  5 21:59 sample.txt
+root@82ca522f3125:/#
