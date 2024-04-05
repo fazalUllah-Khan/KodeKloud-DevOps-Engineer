@@ -1,0 +1,74 @@
+The Nautilus DevOps team is planning to host an application on a nginx-based container. There are number of tickets already been created for similar tasks. One of the tickets has been assigned to set up a nginx container on Application Server 3 in Stratos Datacenter. Please perform the task as per details mentioned below:
+
+a. Pull nginx:alpine-perl docker image on Application Server 3.
+
+b. Create a container named ecommerce using the image you pulled.
+
+c. Map host port 8083 to container port 80. Please keep the container in running state.
+
+# Solution:
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:Z1c/BhkI5ARPQVFXj5UR4qDxh7vL83BsGkw0EUUsz9Y.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+[root@stapp03 ~]# docker pull nginx:alpine-perl
+alpine-perl: Pulling from library/nginx
+619be1103602: Pull complete 
+ed3e62e73b33: Pull complete 
+5126dce06df7: Pull complete 
+1d0dd2dc2265: Pull complete 
+2b1ab92f0231: Pull complete 
+6eba808ac059: Pull complete 
+57038e85fbb8: Pull complete 
+eec94c9845c0: Pull complete 
+545a473dfb75: Pull complete 
+Digest: sha256:eec46d17b50b7cff5b2ce9e8ab439c769bb32af46f04d0cdb54d8892886e90a9
+Status: Downloaded newer image for nginx:alpine-perl
+docker.io/library/nginx:alpine-perl
+[root@stapp03 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               alpine-perl         1ee8f91a6757        7 weeks ago         78.1MB
+[root@stapp03 ~]# docker container run -d --name ecommerce -p 8083:80 nginx:alpine-perl
+8000ae5e767484c0f8f507f64f8dbcb59bdb7cc8e9e9dc071f2dfb7c8f6317a5
+[root@stapp03 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                  NAMES
+8000ae5e7674        nginx:alpine-perl   "/docker-entrypoint.…"   9 seconds ago       Up 7 seconds        0.0.0.0:8083->80/tcp   ecommerce
+[root@stapp03 ~]# curl http://localhost:8083
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@stapp03 ~]#
