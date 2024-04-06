@@ -1,0 +1,78 @@
+xFusionCorp Industries has hosted several static websites on Nautilus Application Servers in Stratos DC. There are some confidential directories in the document root that need to be password protected. 
+Since they are using Apache for hosting the websites, the production support team has decided to use .htaccess with basic auth. There is a website that needs to be uploaded to /var/www/html/dba on Nautilus App Server 3. 
+However, we need to set up the authentication before that.
+
+
+1. Create /var/www/html/dba direcotry if doesn't exist.
+
+2. Add a user anita in htpasswd and set its password to B4zNgHA7Ya.
+
+3. There is a file /tmp/index.html present on Jump Server. Copy the same to the directory you created, please make sure default document root should remain /var/www/html. 
+Also website should work on URL http://<app-server-hostname>:8080/dba/
+
+# Solution:
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:tl+LPguxPJYM2d9PM1olvKQSWXMcKJbh5NN0xVTo9k4.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# htpasswd -c /etc/httpd/.htpasswd anita
+New password: 
+Re-type new password: 
+Adding password for user anita
+[root@stapp03 ~]# systemctl restart httpd
+[root@stapp03 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep Directory
+# <Directory> blocks below.
+<Directory />
+</Directory>
+<Directory "/var/www">
+</Directory>
+<Directory "/var/www/html">
+</Directory>
+# DirectoryIndex: sets the file that Apache will serve if a directory
+    DirectoryIndex index.html
+    # need to provide a <Directory> section to allow access to
+<Directory "/var/www/cgi-bin">
+</Directory>
+[root@stapp03 ~]# mkdir /var/www/html/dba
+[root@stapp03 ~]# cd /var/www/html/dba
+[root@stapp03 dba]# ls -l
+total 0
+[root@stapp03 dba]# vi .htaccess
+[root@stapp03 dba]# cat .htaccess
+AuthType Basic
+AuthName "Password Required"
+Require valid-user
+AuthUserFile /etc/httpd/.htpasswd
+[root@stapp03 dba]#
+
+************ Verification  **********************
+Last login: Sat Apr  6 22:34:10 UTC 2024 on pts/0
+thor@jump_host ~$ scp /tmp/index.html tony@stapp03:/tmp
+tony@stapp03's password: 
+thor@jump_host ~$ scp /tmp/index.html banner@stapp03:/tmp
+banner@stapp03's password: 
+index.html                                                          100%   52   241.9KB/s   00:00    
+thor@jump_host ~$ ssh banner@stapp03
+banner@stapp03's password: 
+Last login: Sat Apr  6 22:34:58 2024 from 172.16.238.2
+[banner@stapp03 ~]$ sudo su -
+[sudo] password for banner: 
+Last login: Sat Apr  6 22:35:05 UTC 2024 on pts/0
+[root@stapp03 ~]# cp /tmp/index.html /var/www/html/dba
+[root@stapp03 ~]# curl -u anita  http://127.0.0.1:8080/dba/index.html
+Enter host password for user 'anita':
+This is xFusionCorp Industries Protected Directory!
+[root@stapp03 ~]#
