@@ -1,0 +1,349 @@
+We have a requirement where we want to password protect a directory in the Apache web server document root. We want to password protect http://<website-url>:<apache_port>/protected URL 
+as per the following requirements (you can use any website-url for it like localhost since there are no such specific requirements as of now). Setup the same on App server 2 as per below mentioned requirements:
+
+a. We want to use basic authentication.
+
+b. We do not want to use htpasswd file based authentication. Instead, we want to use PAM authentication, i.e Basic Auth + PAM so that we can authenticate with a Linux user.
+
+c. We already have a user siva with password B4zNgHA7Ya which you need to provide access to.
+
+d. You can test the same using a curl command from jump host curl http://<website-url>:<apache_port>/protected.
+
+****************************** # Solution***************************
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:SySamszyWhhLGFiybhGBqfrr8g55wS/3e37ZpBOvICs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+Permission denied, please try again.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# id james
+uid=1001(james) gid=1001(james) groups=1001(james)
+[root@stapp01 ~]# yum --enablerepo=epel -y install mod_authnz_external pwauth
+Loaded plugins: fastestmirror, ovl
+Determining fastest mirrors
+epel/x86_64/metalink                                                           |  25 kB  00:00:00     
+^[[C * base: mirror.vacares.com
+ * epel: ix-denver.mm.fcix.net
+ * extras: mirror.umd.edu
+ * remi-php72: cdn.centos.no
+ * remi-safe: cdn.centos.no
+ * updates: mirrors.xmission.com
+base                                                                           | 3.6 kB  00:00:00     
+epel                                                                           | 4.7 kB  00:00:00     
+extras                                                                         | 2.9 kB  00:00:00     
+remi-php72                                                                     | 3.0 kB  00:00:00     
+remi-safe                                                                      | 3.0 kB  00:00:00     
+updates                                                                        | 2.9 kB  00:00:00     
+(1/7): extras/7/x86_64/primary_db                                              | 253 kB  00:00:00     
+(2/7): epel/x86_64/updateinfo                                                  | 1.0 MB  00:00:00     
+(3/7): epel/x86_64/group_gz                                                    | 100 kB  00:00:00     
+(4/7): remi-php72/primary_db                                                   | 267 kB  00:00:00     
+(5/7): remi-safe/primary_db                                                    | 2.6 MB  00:00:00     
+(6/7): epel/x86_64/primary_db                                                  | 7.0 MB  00:00:00     
+(7/7): updates/7/x86_64/primary_db                                             |  26 MB  00:00:00     
+Resolving Dependencies
+--> Running transaction check
+---> Package mod_authnz_external.x86_64 0:3.3.3-3.el7 will be installed
+---> Package pwauth.x86_64 0:2.3.10-9.el7 will be installed
+--> Processing Dependency: /usr/bin/perl for package: pwauth-2.3.10-9.el7.x86_64
+--> Processing Dependency: perl for package: pwauth-2.3.10-9.el7.x86_64
+--> Running transaction check
+---> Package perl.x86_64 4:5.16.3-299.el7_9 will be installed
+--> Processing Dependency: perl-libs = 4:5.16.3-299.el7_9 for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Socket) >= 1.3 for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Scalar::Util) >= 1.10 for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl-macros for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl-libs for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(threads::shared) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(threads) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(constant) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Time::Local) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Time::HiRes) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Storable) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Socket) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Scalar::Util) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Pod::Simple::XHTML) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Pod::Simple::Search) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Getopt::Long) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Filter::Util::Call) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(File::Temp) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(File::Spec::Unix) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(File::Spec::Functions) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(File::Spec) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(File::Path) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Exporter) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Cwd) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: perl(Carp) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Processing Dependency: libperl.so()(64bit) for package: 4:perl-5.16.3-299.el7_9.x86_64
+--> Running transaction check
+---> Package perl-Carp.noarch 0:1.26-244.el7 will be installed
+---> Package perl-Exporter.noarch 0:5.68-3.el7 will be installed
+---> Package perl-File-Path.noarch 0:2.09-2.el7 will be installed
+---> Package perl-File-Temp.noarch 0:0.23.01-3.el7 will be installed
+---> Package perl-Filter.x86_64 0:1.49-3.el7 will be installed
+---> Package perl-Getopt-Long.noarch 0:2.40-3.el7 will be installed
+--> Processing Dependency: perl(Pod::Usage) >= 1.14 for package: perl-Getopt-Long-2.40-3.el7.noarch
+--> Processing Dependency: perl(Text::ParseWords) for package: perl-Getopt-Long-2.40-3.el7.noarch
+---> Package perl-PathTools.x86_64 0:3.40-5.el7 will be installed
+---> Package perl-Pod-Simple.noarch 1:3.28-4.el7 will be installed
+--> Processing Dependency: perl(Pod::Escapes) >= 1.04 for package: 1:perl-Pod-Simple-3.28-4.el7.noarch
+--> Processing Dependency: perl(Encode) for package: 1:perl-Pod-Simple-3.28-4.el7.noarch
+---> Package perl-Scalar-List-Utils.x86_64 0:1.27-248.el7 will be installed
+---> Package perl-Socket.x86_64 0:2.010-5.el7 will be installed
+---> Package perl-Storable.x86_64 0:2.45-3.el7 will be installed
+---> Package perl-Time-HiRes.x86_64 4:1.9725-3.el7 will be installed
+---> Package perl-Time-Local.noarch 0:1.2300-2.el7 will be installed
+---> Package perl-constant.noarch 0:1.27-2.el7 will be installed
+---> Package perl-libs.x86_64 4:5.16.3-299.el7_9 will be installed
+---> Package perl-macros.x86_64 4:5.16.3-299.el7_9 will be installed
+---> Package perl-threads.x86_64 0:1.87-4.el7 will be installed
+---> Package perl-threads-shared.x86_64 0:1.43-6.el7 will be installed
+--> Running transaction check
+---> Package perl-Encode.x86_64 0:2.51-7.el7 will be installed
+---> Package perl-Pod-Escapes.noarch 1:1.04-299.el7_9 will be installed
+---> Package perl-Pod-Usage.noarch 0:1.63-3.el7 will be installed
+--> Processing Dependency: perl(Pod::Text) >= 3.15 for package: perl-Pod-Usage-1.63-3.el7.noarch
+--> Processing Dependency: perl-Pod-Perldoc for package: perl-Pod-Usage-1.63-3.el7.noarch
+---> Package perl-Text-ParseWords.noarch 0:3.29-4.el7 will be installed
+--> Running transaction check
+---> Package perl-Pod-Perldoc.noarch 0:3.20-4.el7 will be installed
+--> Processing Dependency: perl(parent) for package: perl-Pod-Perldoc-3.20-4.el7.noarch
+--> Processing Dependency: perl(HTTP::Tiny) for package: perl-Pod-Perldoc-3.20-4.el7.noarch
+--> Processing Dependency: groff-base for package: perl-Pod-Perldoc-3.20-4.el7.noarch
+---> Package perl-podlators.noarch 0:2.5.1-3.el7 will be installed
+--> Running transaction check
+---> Package groff-base.x86_64 0:1.22.2-8.el7 will be installed
+---> Package perl-HTTP-Tiny.noarch 0:0.033-3.el7 will be installed
+---> Package perl-parent.noarch 1:0.225-244.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+======================================================================================================
+ Package                         Arch            Version                       Repository        Size
+======================================================================================================
+Installing:
+ mod_authnz_external             x86_64          3.3.3-3.el7                   epel              31 k
+ pwauth                          x86_64          2.3.10-9.el7                  epel              17 k
+Installing for dependencies:
+ groff-base                      x86_64          1.22.2-8.el7                  base             942 k
+ perl                            x86_64          4:5.16.3-299.el7_9            updates          8.0 M
+ perl-Carp                       noarch          1.26-244.el7                  base              19 k
+ perl-Encode                     x86_64          2.51-7.el7                    base             1.5 M
+ perl-Exporter                   noarch          5.68-3.el7                    base              28 k
+ perl-File-Path                  noarch          2.09-2.el7                    base              26 k
+ perl-File-Temp                  noarch          0.23.01-3.el7                 base              56 k
+ perl-Filter                     x86_64          1.49-3.el7                    base              76 k
+ perl-Getopt-Long                noarch          2.40-3.el7                    base              56 k
+ perl-HTTP-Tiny                  noarch          0.033-3.el7                   base              38 k
+ perl-PathTools                  x86_64          3.40-5.el7                    base              82 k
+ perl-Pod-Escapes                noarch          1:1.04-299.el7_9              updates           52 k
+ perl-Pod-Perldoc                noarch          3.20-4.el7                    base              87 k
+ perl-Pod-Simple                 noarch          1:3.28-4.el7                  base             216 k
+ perl-Pod-Usage                  noarch          1.63-3.el7                    base              27 k
+ perl-Scalar-List-Utils          x86_64          1.27-248.el7                  base              36 k
+ perl-Socket                     x86_64          2.010-5.el7                   base              49 k
+ perl-Storable                   x86_64          2.45-3.el7                    base              77 k
+ perl-Text-ParseWords            noarch          3.29-4.el7                    base              14 k
+ perl-Time-HiRes                 x86_64          4:1.9725-3.el7                base              45 k
+ perl-Time-Local                 noarch          1.2300-2.el7                  base              24 k
+ perl-constant                   noarch          1.27-2.el7                    base              19 k
+ perl-libs                       x86_64          4:5.16.3-299.el7_9            updates          690 k
+ perl-macros                     x86_64          4:5.16.3-299.el7_9            updates           44 k
+ perl-parent                     noarch          1:0.225-244.el7               base              12 k
+ perl-podlators                  noarch          2.5.1-3.el7                   base             112 k
+ perl-threads                    x86_64          1.87-4.el7                    base              49 k
+ perl-threads-shared             x86_64          1.43-6.el7                    base              39 k
+
+Transaction Summary
+======================================================================================================
+Install  2 Packages (+28 Dependent packages)
+
+Total download size: 12 M
+Installed size: 40 M
+Downloading packages:
+(1/30): perl-Carp-1.26-244.el7.noarch.rpm                                      |  19 kB  00:00:00     
+(2/30): perl-Exporter-5.68-3.el7.noarch.rpm                                    |  28 kB  00:00:00     
+(3/30): perl-File-Path-2.09-2.el7.noarch.rpm                                   |  26 kB  00:00:00     
+(4/30): perl-5.16.3-299.el7_9.x86_64.rpm                                       | 8.0 MB  00:00:00     
+(5/30): perl-File-Temp-0.23.01-3.el7.noarch.rpm                                |  56 kB  00:00:00     
+(6/30): perl-Getopt-Long-2.40-3.el7.noarch.rpm                                 |  56 kB  00:00:00     
+(7/30): perl-HTTP-Tiny-0.033-3.el7.noarch.rpm                                  |  38 kB  00:00:00     
+(8/30): mod_authnz_external-3.3.3-3.el7.x86_64.rpm                             |  31 kB  00:00:00     
+(9/30): perl-Encode-2.51-7.el7.x86_64.rpm                                      | 1.5 MB  00:00:00     
+(10/30): perl-Pod-Escapes-1.04-299.el7_9.noarch.rpm                            |  52 kB  00:00:00     
+(11/30): perl-PathTools-3.40-5.el7.x86_64.rpm                                  |  82 kB  00:00:00     
+(12/30): perl-Pod-Perldoc-3.20-4.el7.noarch.rpm                                |  87 kB  00:00:00     
+(13/30): perl-Pod-Usage-1.63-3.el7.noarch.rpm                                  |  27 kB  00:00:00     
+(14/30): perl-Scalar-List-Utils-1.27-248.el7.x86_64.rpm                        |  36 kB  00:00:00     
+(15/30): perl-Socket-2.010-5.el7.x86_64.rpm                                    |  49 kB  00:00:00     
+(16/30): perl-Storable-2.45-3.el7.x86_64.rpm                                   |  77 kB  00:00:00     
+(17/30): perl-Text-ParseWords-3.29-4.el7.noarch.rpm                            |  14 kB  00:00:00     
+(18/30): perl-Time-HiRes-1.9725-3.el7.x86_64.rpm                               |  45 kB  00:00:00     
+(19/30): perl-Filter-1.49-3.el7.x86_64.rpm                                     |  76 kB  00:00:00     
+(20/30): perl-Time-Local-1.2300-2.el7.noarch.rpm                               |  24 kB  00:00:00     
+(21/30): perl-libs-5.16.3-299.el7_9.x86_64.rpm                                 | 690 kB  00:00:00     
+(22/30): perl-constant-1.27-2.el7.noarch.rpm                                   |  19 kB  00:00:00     
+(23/30): perl-parent-0.225-244.el7.noarch.rpm                                  |  12 kB  00:00:00     
+(24/30): perl-Pod-Simple-3.28-4.el7.noarch.rpm                                 | 216 kB  00:00:00     
+(25/30): perl-podlators-2.5.1-3.el7.noarch.rpm                                 | 112 kB  00:00:00     
+(26/30): perl-macros-5.16.3-299.el7_9.x86_64.rpm                               |  44 kB  00:00:00     
+(27/30): perl-threads-1.87-4.el7.x86_64.rpm                                    |  49 kB  00:00:00     
+(28/30): pwauth-2.3.10-9.el7.x86_64.rpm                                        |  17 kB  00:00:00     
+(29/30): perl-threads-shared-1.43-6.el7.x86_64.rpm                             |  39 kB  00:00:00     
+(30/30): groff-base-1.22.2-8.el7.x86_64.rpm                                    | 942 kB  00:00:04     
+------------------------------------------------------------------------------------------------------
+Total                                                                 2.4 MB/s |  12 MB  00:00:05     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : groff-base-1.22.2-8.el7.x86_64                                                    1/30 
+  Installing : 1:perl-parent-0.225-244.el7.noarch                                                2/30 
+  Installing : perl-HTTP-Tiny-0.033-3.el7.noarch                                                 3/30 
+  Installing : perl-podlators-2.5.1-3.el7.noarch                                                 4/30 
+  Installing : perl-Pod-Perldoc-3.20-4.el7.noarch                                                5/30 
+  Installing : 1:perl-Pod-Escapes-1.04-299.el7_9.noarch                                          6/30 
+  Installing : perl-Encode-2.51-7.el7.x86_64                                                     7/30 
+  Installing : perl-Text-ParseWords-3.29-4.el7.noarch                                            8/30 
+  Installing : perl-Pod-Usage-1.63-3.el7.noarch                                                  9/30 
+  Installing : 4:perl-macros-5.16.3-299.el7_9.x86_64                                            10/30 
+  Installing : perl-Storable-2.45-3.el7.x86_64                                                  11/30 
+  Installing : perl-Exporter-5.68-3.el7.noarch                                                  12/30 
+  Installing : perl-constant-1.27-2.el7.noarch                                                  13/30 
+  Installing : perl-Socket-2.010-5.el7.x86_64                                                   14/30 
+  Installing : perl-Time-Local-1.2300-2.el7.noarch                                              15/30 
+  Installing : perl-Carp-1.26-244.el7.noarch                                                    16/30 
+  Installing : 4:perl-Time-HiRes-1.9725-3.el7.x86_64                                            17/30 
+  Installing : perl-PathTools-3.40-5.el7.x86_64                                                 18/30 
+  Installing : perl-Scalar-List-Utils-1.27-248.el7.x86_64                                       19/30 
+  Installing : 1:perl-Pod-Simple-3.28-4.el7.noarch                                              20/30 
+  Installing : perl-File-Temp-0.23.01-3.el7.noarch                                              21/30 
+  Installing : perl-File-Path-2.09-2.el7.noarch                                                 22/30 
+  Installing : perl-threads-shared-1.43-6.el7.x86_64                                            23/30 
+  Installing : perl-threads-1.87-4.el7.x86_64                                                   24/30 
+  Installing : perl-Filter-1.49-3.el7.x86_64                                                    25/30 
+  Installing : 4:perl-libs-5.16.3-299.el7_9.x86_64                                              26/30 
+  Installing : perl-Getopt-Long-2.40-3.el7.noarch                                               27/30 
+  Installing : 4:perl-5.16.3-299.el7_9.x86_64                                                   28/30 
+  Installing : pwauth-2.3.10-9.el7.x86_64                                                       29/30 
+  Installing : mod_authnz_external-3.3.3-3.el7.x86_64                                           30/30 
+  Verifying  : pwauth-2.3.10-9.el7.x86_64                                                        1/30 
+  Verifying  : perl-HTTP-Tiny-0.033-3.el7.noarch                                                 2/30 
+  Verifying  : perl-threads-shared-1.43-6.el7.x86_64                                             3/30 
+  Verifying  : perl-Storable-2.45-3.el7.x86_64                                                   4/30 
+  Verifying  : perl-Exporter-5.68-3.el7.noarch                                                   5/30 
+  Verifying  : perl-constant-1.27-2.el7.noarch                                                   6/30 
+  Verifying  : perl-PathTools-3.40-5.el7.x86_64                                                  7/30 
+  Verifying  : 4:perl-macros-5.16.3-299.el7_9.x86_64                                             8/30 
+  Verifying  : 1:perl-parent-0.225-244.el7.noarch                                                9/30 
+  Verifying  : perl-Socket-2.010-5.el7.x86_64                                                   10/30 
+  Verifying  : groff-base-1.22.2-8.el7.x86_64                                                   11/30 
+  Verifying  : perl-File-Temp-0.23.01-3.el7.noarch                                              12/30 
+  Verifying  : 1:perl-Pod-Simple-3.28-4.el7.noarch                                              13/30 
+  Verifying  : perl-Time-Local-1.2300-2.el7.noarch                                              14/30 
+  Verifying  : 1:perl-Pod-Escapes-1.04-299.el7_9.noarch                                         15/30 
+  Verifying  : perl-Carp-1.26-244.el7.noarch                                                    16/30 
+  Verifying  : 4:perl-Time-HiRes-1.9725-3.el7.x86_64                                            17/30 
+  Verifying  : perl-Scalar-List-Utils-1.27-248.el7.x86_64                                       18/30 
+  Verifying  : perl-Pod-Usage-1.63-3.el7.noarch                                                 19/30 
+  Verifying  : perl-Encode-2.51-7.el7.x86_64                                                    20/30 
+  Verifying  : perl-Pod-Perldoc-3.20-4.el7.noarch                                               21/30 
+  Verifying  : perl-podlators-2.5.1-3.el7.noarch                                                22/30 
+  Verifying  : 4:perl-5.16.3-299.el7_9.x86_64                                                   23/30 
+  Verifying  : perl-File-Path-2.09-2.el7.noarch                                                 24/30 
+  Verifying  : perl-threads-1.87-4.el7.x86_64                                                   25/30 
+  Verifying  : perl-Filter-1.49-3.el7.x86_64                                                    26/30 
+  Verifying  : perl-Getopt-Long-2.40-3.el7.noarch                                               27/30 
+  Verifying  : perl-Text-ParseWords-3.29-4.el7.noarch                                           28/30 
+  Verifying  : mod_authnz_external-3.3.3-3.el7.x86_64                                           29/30 
+  Verifying  : 4:perl-libs-5.16.3-299.el7_9.x86_64                                              30/30 
+
+Installed:
+  mod_authnz_external.x86_64 0:3.3.3-3.el7                pwauth.x86_64 0:2.3.10-9.el7               
+
+Dependency Installed:
+  groff-base.x86_64 0:1.22.2-8.el7                perl.x86_64 4:5.16.3-299.el7_9                     
+  perl-Carp.noarch 0:1.26-244.el7                 perl-Encode.x86_64 0:2.51-7.el7                    
+  perl-Exporter.noarch 0:5.68-3.el7               perl-File-Path.noarch 0:2.09-2.el7                 
+  perl-File-Temp.noarch 0:0.23.01-3.el7           perl-Filter.x86_64 0:1.49-3.el7                    
+  perl-Getopt-Long.noarch 0:2.40-3.el7            perl-HTTP-Tiny.noarch 0:0.033-3.el7                
+  perl-PathTools.x86_64 0:3.40-5.el7              perl-Pod-Escapes.noarch 1:1.04-299.el7_9           
+  perl-Pod-Perldoc.noarch 0:3.20-4.el7            perl-Pod-Simple.noarch 1:3.28-4.el7                
+  perl-Pod-Usage.noarch 0:1.63-3.el7              perl-Scalar-List-Utils.x86_64 0:1.27-248.el7       
+  perl-Socket.x86_64 0:2.010-5.el7                perl-Storable.x86_64 0:2.45-3.el7                  
+  perl-Text-ParseWords.noarch 0:3.29-4.el7        perl-Time-HiRes.x86_64 4:1.9725-3.el7              
+  perl-Time-Local.noarch 0:1.2300-2.el7           perl-constant.noarch 0:1.27-2.el7                  
+  perl-libs.x86_64 4:5.16.3-299.el7_9             perl-macros.x86_64 4:5.16.3-299.el7_9              
+  perl-parent.noarch 1:0.225-244.el7              perl-podlators.noarch 0:2.5.1-3.el7                
+  perl-threads.x86_64 0:1.87-4.el7                perl-threads-shared.x86_64 0:1.43-6.el7            
+
+Complete!
+[root@stapp01 ~]# vi /etc/httpd/conf.d/authnz_external.conf
+[root@stapp01 ~]# cat /etc/httpd/conf.d/authnz_external.conf
+
+DefineExternalAuth pwauth pipe /usr/bin/pwauth
+
+#
+# see also: https://github.com/bimimicah/mod-auth-external/wiki/ConfigApache24
+#
+
+#<Location "/staff">
+#
+#       # Require SSL connection for password protection.
+#       SSLRequireSSL
+#
+#       AuthType Basic
+#       AuthName "Staff content"
+#       AuthBasicProvider external
+#       AuthExternal pwauth
+#       require valid-user
+#
+#</Location>
+<Directory /var/www/html/protected>
+AuthType Basic
+AuthName "PAM Authentication"
+AuthBasicProvider external
+AuthExternal pwauth
+require valid-user
+</Directory>
+
+[root@stapp01 ~]# mkdir -p /var/www/html/protected
+[root@stapp01 ~]# cat /var/www/html/protected/index.html
+This is KodeKloud Protected Directory
+[root@stapp01 ~]# systemctl start httpd
+[root@stapp01 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-04-06 23:34:09 UTC; 6s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+ Main PID: 1136 (httpd)
+   Status: "Processing requests..."
+   CGroup: /docker/f7bc61bb7376834525bd4c8c82ce67720ecf91adff18140a1cea4964ec7096ab/system.slice/httpd.service
+           ├─1136 /usr/sbin/httpd -DFOREGROUND
+           ├─1137 /usr/sbin/httpd -DFOREGROUND
+           ├─1138 /usr/sbin/httpd -DFOREGROUND
+           ├─1139 /usr/sbin/httpd -DFOREGROUND
+           ├─1140 /usr/sbin/httpd -DFOREGROUND
+           └─1141 /usr/sbin/httpd -DFOREGROUND
+
+Apr 06 23:34:09 stapp01.stratos.xfusioncorp.com systemd[1]: Starting The Apache HTTP Server...
+Apr 06 23:34:09 stapp01.stratos.xfusioncorp.com httpd[1136]: AH00558: httpd: Could not reliably d...ge
+Apr 06 23:34:09 stapp01.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stapp01 ~]# curl -u james:dCV3szSGNA http://localhost:8080/protected/
+This is KodeKloud Protected Directory
+[root@stapp01 ~]#
