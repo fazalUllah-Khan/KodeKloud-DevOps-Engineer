@@ -1,0 +1,114 @@
+
+The Nautilus devops team got some requirements related to some Apache config changes. They need to setup some redirects for some URLs. There might be some more changes need to be done. Below you can find more details regarding that:
+
+
+1.) httpd is already installed on app server 3. Configure Apache to listen on port 5002.
+
+2.	Configure Apache to add some redirects as mentioned below:
+
+a.) Redirect http://stapp03.stratos.xfusioncorp.com:<Port>/ to http://www.stapp03.stratos.xfusioncorp.com:<Port>/ i.e non www to www. This must be a permanent redirect i.e 301
+
+b.) Redirect http://www.stapp03.stratos.xfusioncorp.com:<Port>/blog/ to http://www.stapp03.stratos.xfusioncorp.com:<Port>/news/. This must be a temporary redirect i.e 302.
+
+
+
+# Solution
+Last login: Sat Apr  6 13:39:34 UTC 2024 on pts/0
+thor@jump_host ~$ ssh banner@stapp03
+banner@stapp03's password: 
+Last login: Sat Apr  6 13:40:11 2024 from jump_host.linux-apache-redirects-v2_app_net
+[banner@stapp03 ~]$ sudo su -
+[sudo] password for banner: 
+Last login: Sat Apr  6 13:40:17 UTC 2024 on pts/0
+[root@stapp03 ~]# rpm -qa |grep httpd
+httpd-tools-2.4.6-90.el7.centos.x86_64
+httpd-2.4.6-90.el7.centos.x86_64
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 5002
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep redirect
+# 1) plain text 2) local redirects 3) external redirects
+[root@stapp03 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 5002
+[root@stapp03 ~]# ls -l /etc/httpd/conf.d/
+total 24
+-rw-r--r-- 1 root root 2926 Aug  8  2019 autoindex.conf
+-rw-r--r-- 1 root root  321 Apr  6 13:43 main.conf
+-rw-r--r-- 1 root root 1252 Dec 17  2019 php.conf
+-rw-r--r-- 1 root root  366 Aug  8  2019 README
+-rw-r--r-- 1 root root 1252 Aug  6  2019 userdir.conf
+-rw-r--r-- 1 root root  824 Aug  6  2019 welcome.conf
+[root@stapp03 ~]# vi /etc/httpd/conf.d/main.conf
+[root@stapp03 ~]# cat /etc/httpd/conf.d/main.conf
+<VirtualHost *:5002>
+
+ServerName stapp03.stratos.xfusioncorp.com
+
+Redirect 301 / http://www.stapp03.stratos.xfusioncorp.com:5002/
+
+</VirtualHost>
+
+ 
+
+<VirtualHost *:5002>
+
+ServerName www.stapp03.stratos.xfusioncorp.com:5002/blog/
+
+Redirect 302 /blog/ http://www.stapp03.stratos.xfusioncorp.com:5002/news/
+
+</VirtualHost>
+[root@stapp03 ~]# systemctl restart httpd
+[root@stapp03 ~]# systemctl status  httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-04-06 13:49:42 UTC; 6s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+  Process: 705 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=0/SUCCESS)
+ Main PID: 708 (httpd)
+   Status: "Processing requests..."
+   CGroup: /docker/1fcaa8e1dc32c6035de9dc572f17830a7c77941d779fa480347ff5918bd3db36/system.slice/httpd.service
+           ├─708 /usr/sbin/httpd -DFOREGROUND
+           ├─709 /usr/sbin/httpd -DFOREGROUND
+           ├─710 /usr/sbin/httpd -DFOREGROUND
+           ├─711 /usr/sbin/httpd -DFOREGROUND
+           ├─712 /usr/sbin/httpd -DFOREGROUND
+           └─713 /usr/sbin/httpd -DFOREGROUND
+
+Apr 06 13:49:42 stapp03.stratos.xfusioncorp.com systemd[1]: Starting The Apache HTTP Server...
+Apr 06 13:49:42 stapp03.stratos.xfusioncorp.com httpd[708]: AH00558: httpd: Could not reliably de...ge
+Apr 06 13:49:42 stapp03.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stapp03 ~]# curl http://stapp03.stratos.xfusioncorp.com:5002/
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>301 Moved Permanently</title>
+</head><body>
+<h1>Moved Permanently</h1>
+<p>The document has moved <a href="http://www.stapp03.stratos.xfusioncorp.com:5002/">here</a>.</p>
+</body></html>
+[root@stapp03 ~]# curl http://www.stapp03.stratos.xfusioncorp.com:5002
+Welcome to the Nautilus Group!
+[root@stapp03 ~]# curl http://www.stapp03.stratos.xfusioncorp.com:5002/blog/
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>302 Found</title>
+</head><body>
+<h1>Found</h1>
+<p>The document has moved <a href="http://www.stapp03.stratos.xfusioncorp.com:5002/news/">here</a>.</p>
+</body></html>
+[root@stapp03 ~]# curl http://www.stapp03.stratos.xfusioncorp.com:5002/news/
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>The requested URL /news/ was not found on this server.</p>
+</body></html>
+[root@stapp03 ~]#
