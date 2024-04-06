@@ -1,0 +1,79 @@
+The Nautilus application development team shared static website content that needs to be hosted on the httpd web server using a containerised platform. The team has shared details with the DevOps team, and we need to set up an environment according to those guidelines. Below are the details:
+
+
+a. On App Server 2 in Stratos DC create a container named httpd using a docker compose file /opt/docker/docker-compose.yml (please use the exact name for file).
+
+b. Use httpd (preferably latest tag) image for container and make sure container is named as httpd; you can use any name for service.
+
+c. Map 80 number port of container with port 8087 of docker host.
+
+d. Map container's /usr/local/apache2/htdocs volume with /opt/ security volume of docker host which is already there. (please do not modify any data within these locations).
+
+# Solution:
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:7KcLEiAJ38FWKwRKN5SMTUT0P0ldHMrzeULTdp2Y+GE.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# ls
+anaconda-ks.cfg  anaconda-post-nochroot.log  anaconda-post.log  buildinfo  original-ks.cfg
+[root@stapp01 ~]# cd /opt/docker/
+[root@stapp01 docker]# ls -l
+total 0
+[root@stapp01 docker]# vi docker-compose.yml
+[root@stapp01 docker]# docker-compose up -d
+Creating network "docker_default" with the default driver
+Pulling httpd (httpd:latest)...
+latest: Pulling from library/httpd
+8a1e25ce7c4f: Pull complete
+9d6bc7327bff: Pull complete
+4f4fb700ef54: Pull complete
+32da760aec63: Pull complete
+b8bd53c7eb2b: Pull complete
+fafe44e4648e: Pull complete
+Digest: sha256:ef6014cbbd99808811831bd36a596f36918847d3f6cb6b3f63874a92daee8d6b
+Status: Downloaded newer image for httpd:latest
+Creating httpd ... done
+[root@stapp01 docker]# ls -l
+total 4
+-rw-r--r-- 1 root root 173 Apr  6 13:06 docker-compose.yml
+[root@stapp01 docker]# curl http://localhost:5002
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /</title>
+ </head>
+ <body>
+<h1>Index of /</h1>
+<ul><li><a href="index1.html"> index1.html</a></li>
+</ul>
+</body></html>
+[root@stapp01 docker]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)
+     Docs: man:httpd.service(8)
+
+Apr 06 13:09:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Collecting.
+[root@stapp01 docker]# cat docker-compose.yml
+version: '3'
+services:
+  httpd:
+    container_name: httpd
+    image: httpd:latest
+    ports:
+      - "5002:80"
+    volumes:
+      - /opt/security:/usr/local/apache2/htdocs 
+[root@stapp01 docker]#
