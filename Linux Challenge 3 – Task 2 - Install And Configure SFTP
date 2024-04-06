@@ -1,0 +1,148 @@
+Some of the developers from Nautilus project team have asked for SFTP access to at least one of the app server in Stratos DC. After going through the requirements, the system admins team has decided to configure the SFTP server on App Server 3 server in Stratos Datacenter. Please configure it as per the following instructions:
+
+
+a. Create a SFTP user anita and set its password to B4zNgHA7Ya. There is already a group called ftp, you can utilise the same.
+
+b. Password authentication should be enabled for this user.
+
+c. SFTP user should only be allowed to make SFTP connections.
+
+
+# Solution
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:kH2m63aU+ZyHnpsnHOIl1rq4ydMi+cAh1EOdE5MdUv4.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# user id anita
+-bash: user: command not found
+[root@stapp03 ~]# userid anita
+-bash: userid: command not found
+[root@stapp03 ~]# useradd anita
+[root@stapp03 ~]#  passwd anita
+Changing password for user anita.
+New password: 
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@stapp03 ~]# mkdir -p /var/www/nfsshare
+[root@stapp03 ~]# ls -l -lsd /var/www/nfsshare
+4 drwxr-xr-x 2 root root 4096 Apr  6 14:01 /var/www/nfsshare
+[root@stapp03 ~]# chown root:root  /var/www
+[root@stapp03 ~]# chmod -R 755 /var/www
+[root@stapp03 ~]# ls -l -lsd /var/www/
+4 drwxr-xr-x 3 root root 4096 Apr  6 14:01 /var/www/
+[root@stapp03 ~]# vi /etc/ssh/sshd_config
+[root@stapp03 ~]# cat /etc/ssh/sshd_config  |grep sftp -A 10
+#Subsystem      sftp    /usr/libexec/openssh/sftp-server
+Subsystem       sftp    internal-sftp
+
+# Example of overriding settings on a per-user basis
+#Match User anoncvs
+#       X11Forwarding no
+#       AllowTcpForwarding no
+#       PermitTTY no
+#       ForceCommand cvs server
+Match User anita
+ForceCommand internal-sftp
+[root@stapp03 ~]# vi /etc/ssh/sshd_config
+[root@stapp03 ~]# systemctl restart sshd
+[root@stapp03 ~]# systemctl status sshd
+● sshd.service - OpenSSH server daemon
+   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sat 2024-04-06 14:18:39 UTC; 7s ago
+     Docs: man:sshd(8)
+           man:sshd_config(5)
+ Main PID: 732 (sshd)
+    Tasks: 9 (limit: 1340692)
+   Memory: 21.1M
+   CGroup: /docker/7d037288a917b88fed66eb0e2a63342f4181d590e75feba6a0da1e5f0b25b651/system.slice/sshd.
+service
+           ├─524 sshd: banner [priv]
+           ├─539 sshd: banner@pts/0
+           ├─540 -bash
+           ├─559 sudo su -
+           ├─566 su -
+           ├─574 -bash
+           ├─732 /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes2
+56-ctr,aes256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cbc -oMACs=hmac-sha2-256-etm@openssh.com,hm
+ac-sha1-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha1
+,umac-128@openssh.com,hmac-sha2-512 -oGSSAPIKexAlgorithms=gss-curve25519-sha256-,gss-nistp256-sha256-,
+gss-group14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-group14-sha1- -oKexAlgorithms=curve25519-sha
+256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellm
+an-group-exchange-sha256,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-gr
+oup18-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=ecdsa-
+sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v0
+1@openssh.com,ecdsa-sha2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cer
+t-v01@openssh.com,rsa-sha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@op
+enssh.com,ssh-rsa,ssh-rsa-cert-v01@openssh.com -oPubkeyAcceptedKeyTypes=ecdsa-sha2-nistp256,ecdsa-sha2
+-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2
+-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sh
+a2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.com,ssh-rsa,ssh-rs
+a-cert-v01@openssh.com -oCASignatureAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nist
+p521,ssh-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rsa
+           ├─757 systemctl status sshd
+           └─771 more
+
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: Starting OpenSSH server daemon...
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[732]: sshd.service: Ex
+ecuting: /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,a
+es256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cbc -oMACs=hmac-sha2-256-etm@openssh.com,hmac-sha1-
+etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha1,umac-12
+8@openssh.com,hmac-sha2-512 -oGSSAPIKexAlgorithms=gss-curve25519-sha256-,gss-nistp256-sha256-,gss-grou
+p14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-group14-sha1- -oKexAlgorithms=curve25519-sha256,curv
+e25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group
+-exchange-sha256,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sh
+a512,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=ecdsa-sha2-nis
+tp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openss
+h.com,ecdsa-sha2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@op
+enssh.com,rsa-sha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.co
+m,ssh-rsa,ssh-rsa-cert-v01@openssh.com -oPubkeyAcceptedKeyTypes=ecdsa-sha2-nistp256,ecdsa-sha2-nistp25
+6-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp52
+1,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-256,r
+sa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.com,ssh-rsa,ssh-rsa-cert-v
+01@openssh.com -oCASignatureAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh
+-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rsa
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com sshd[732]: WARNING: 'UsePAM no' is not supported in RH
+EL and may cause several problems.
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com sshd[732]: Server listening on 0.0.0.0 port 22.
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com sshd[732]: Server listening on :: port 22.
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Got 
+notification message from PID 732 (READY=1)
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Chan
+ged start -> running
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Job 
+sshd.service/start finished, result=done
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: Started OpenSSH server daemon.
+Apr 06 14:18:39 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Fail
+ed to send unit change signal for sshd.service: Connection reset by peer
+[root@stapp03 ~]# 
+[root@stapp03 ~]# sftp anita@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:kH2m63aU+ZyHnpsnHOIl1rq4ydMi+cAh1EOdE5MdUv4.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+anita@stapp03's password: 
+Connected to stapp03.
+sftp> logout
+Invalid command.
+sftp> exit
+exit
+[root@stapp03 ~]# sftp anita@localhost
+The authenticity of host 'localhost (127.0.0.1)' can't be established.
+ECDSA key fingerprint is SHA256:kH2m63aU+ZyHnpsnHOIl1rq4ydMi+cAh1EOdE5MdUv4.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'localhost' (ECDSA) to the list of known hosts.
+anita@localhost's password: 
+Connected to localhost.
+sftp>
