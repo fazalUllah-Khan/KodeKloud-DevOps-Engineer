@@ -1,0 +1,461 @@
+We have one of our websites up and running on our Nautilus infrastructure in Stratos DC. Our security team has raised a concern that right now Apache’s port i.e 8086 is open for all since there is no firewall installed on these hosts. So we have decided to add some security layer for these hosts and after discussions and recommendations we have come up with the following requirements:
+
+
+1. Install iptables and all its dependencies on each app host.
+
+2. Block incoming port 8086 on all apps for everyone except for LBR host.
+
+3. Make sure the rules remain, even after system reboot.
+
+# Solution
+
+********************* Server -1- Stapp01 **********************************************
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:wp39NsLf8Zi0sM2E1669XVXhdW48N1cajFH4ZhoLUTk.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# yum install  -y iptables-services
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            27 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            26 MB/s |  28 MB     00:01    
+CentOS Stream 8 - BaseOS                                               46 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                               33 MB/s |  10 MB     00:00    
+CentOS Stream 8 - Extras                                               13 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               17 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               31 kB/s | 7.7 kB     00:00    
+Docker CE Stable - x86_64                                              49 kB/s | 3.5 kB     00:00    
+Docker CE Stable - x86_64                                             603 kB/s |  60 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        3.4 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      16 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             879 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                       Architecture       Version                    Repository          Size
+======================================================================================================
+Installing:
+ iptables-services             x86_64             1.8.5-11.el8               baseos              65 k
+Upgrading:
+ iptables                      x86_64             1.8.5-11.el8               baseos             671 k
+ iptables-libs                 x86_64             1.8.5-11.el8               baseos             103 k
+
+Transaction Summary
+======================================================================================================
+Install  1 Package
+Upgrade  2 Packages
+
+Total download size: 839 k
+Downloading Packages:
+(1/3): iptables-services-1.8.5-11.el8.x86_64.rpm                      1.1 MB/s |  65 kB     00:00    
+(2/3): iptables-libs-1.8.5-11.el8.x86_64.rpm                          1.4 MB/s | 103 kB     00:00    
+(3/3): iptables-1.8.5-11.el8.x86_64.rpm                               6.5 MB/s | 671 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 5.6 MB/s | 839 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Upgrading        : iptables-libs-1.8.5-11.el8.x86_64                                            1/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Upgrading        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Installing       : iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Running scriptlet: iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Cleanup          : iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Running scriptlet: iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Cleanup          : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Running scriptlet: iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Verifying        : iptables-services-1.8.5-11.el8.x86_64                                        1/5 
+  Verifying        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Verifying        : iptables-1.8.4-24.el8.x86_64                                                 3/5 
+  Verifying        : iptables-libs-1.8.5-11.el8.x86_64                                            4/5 
+  Verifying        : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+Installed products updated.
+
+Upgraded:
+  iptables-1.8.5-11.el8.x86_64                    iptables-libs-1.8.5-11.el8.x86_64                   
+Installed:
+  iptables-services-1.8.5-11.el8.x86_64                                                               
+
+Complete!
+[root@stapp01 ~]# systemctl start iptables && systemctl enable iptables
+Created symlink /etc/systemd/system/multi-user.target.wants/iptables.service → /usr/lib/systemd/system/iptables.service.
+[root@stapp01 ~]# iptables -A INPUT -p tcp --destination-port 8086 -s 172.16.238.14 -j ACCEPT
+[root@stapp01 ~]# iptables -A INPUT -p tcp --destination-port 8086 -j DROP
+[root@stapp01 ~]# iptables -L --line-numbers
+# Warning: iptables-legacy tables present, use iptables-legacy to see them
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  anywhere             anywhere            
+3    ACCEPT     all  --  anywhere             anywhere            
+4    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+5    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+6    ACCEPT     tcp  --  stlb01               anywhere             tcp dpt:d-s-n
+7    DROP       tcp  --  anywhere             anywhere             tcp dpt:d-s-n
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stapp01 ~]# iptables -R INPUT 5 -p icmp -j REJECT
+[root@stapp01 ~]# service iptables save 
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]
+[root@stapp01 ~]# systemctl restart iptables && systemctl status iptables
+● iptables.service - IPv4 firewall with iptables
+   Loaded: loaded (/usr/lib/systemd/system/iptables.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Sat 2024-04-06 15:53:59 UTC; 21ms ago
+  Process: 1641 ExecStop=/usr/libexec/iptables/iptables.init stop (code=exited, status=0/SUCCESS)
+  Process: 1682 ExecStart=/usr/libexec/iptables/iptables.init start (code=exited, status=0/SUCCESS)
+ Main PID: 1682 (code=exited, status=0/SUCCESS)
+
+Apr 06 15:53:58 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Changed dead -> start
+Apr 06 15:53:58 stapp01.stratos.xfusioncorp.com systemd[1]: Starting IPv4 firewall with iptables...
+Apr 06 15:53:58 stapp01.stratos.xfusioncorp.com systemd[1682]: iptables.service: Executing: /usr/libe>
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com iptables.init[1682]: iptables: Applying firewall rule>
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Child 1682 belongs to i>
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Main process exited, co>
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Changed start -> exited
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Job iptables.service/st>
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: Started IPv4 firewall with iptables.
+Apr 06 15:53:59 stapp01.stratos.xfusioncorp.com systemd[1]: iptables.service: Failed to send unit cha>
+
+[root@stapp01 ~]#
+
+***************************************************** Verification: ************************************************
+thor@jump_host ~$ curl -I stapp01:8086
+curl: (7) Failed to connect to stapp01 port 8086: Connection timed out
+thor@jump_host ~$
+Last login: Sat Apr  6 15:54:38 UTC 2024 on pts/2
+thor@jump_host ~$ ssh loki@stlb01
+The authenticity of host 'stlb01 (172.16.238.14)' can't be established.
+ECDSA key fingerprint is SHA256:f9v9oKfhOgWtMO6H5MF2JCUqv36NbAsUlfyYXhQXgfA.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stlb01,172.16.238.14' (ECDSA) to the list of known hosts.
+loki@stlb01's password: 
+[loki@stlb01 ~]$ curl -I stapp01:8086
+HTTP/1.1 403 Forbidden
+Date: Sat, 06 Apr 2024 15:58:20 GMT
+Server: Apache/2.4.37 (centos)
+Last-Modified: Sun, 27 Jun 2021 23:47:13 GMT
+ETag: "30c0b-5c5c7fdeec240"
+Accept-Ranges: bytes
+Content-Length: 199691
+Content-Type: text/html; charset=UTF-8
+
+************************ Server 02 - Stapp02 ***********************************
+Last login: Sat Apr  6 15:57:06 UTC 2024 on pts/4
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:KZ5hE1KSOSFmXEN8JrtnjmyX/bFRQG7tIuq48qry9uQ.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# yum install  -y iptables-services
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            15 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            28 MB/s |  28 MB     00:00    
+CentOS Stream 8 - BaseOS                                               19 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                              9.2 MB/s |  10 MB     00:01    
+CentOS Stream 8 - Extras                                               10 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               13 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               39 kB/s | 7.7 kB     00:00    
+Docker CE Stable - x86_64                                              38 kB/s | 3.5 kB     00:00    
+Docker CE Stable - x86_64                                             524 kB/s |  60 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        2.4 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      16 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             350 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                       Architecture       Version                    Repository          Size
+======================================================================================================
+Installing:
+ iptables-services             x86_64             1.8.5-11.el8               baseos              65 k
+Upgrading:
+ iptables                      x86_64             1.8.5-11.el8               baseos             671 k
+ iptables-libs                 x86_64             1.8.5-11.el8               baseos             103 k
+
+Transaction Summary
+======================================================================================================
+Install  1 Package
+Upgrade  2 Packages
+
+Total download size: 839 k
+Downloading Packages:
+(1/3): iptables-services-1.8.5-11.el8.x86_64.rpm                      311 kB/s |  65 kB     00:00    
+(2/3): iptables-libs-1.8.5-11.el8.x86_64.rpm                          394 kB/s | 103 kB     00:00    
+(3/3): iptables-1.8.5-11.el8.x86_64.rpm                               1.8 MB/s | 671 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 2.0 MB/s | 839 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Upgrading        : iptables-libs-1.8.5-11.el8.x86_64                                            1/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Upgrading        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Installing       : iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Running scriptlet: iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Cleanup          : iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Running scriptlet: iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Cleanup          : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Running scriptlet: iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Verifying        : iptables-services-1.8.5-11.el8.x86_64                                        1/5 
+  Verifying        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Verifying        : iptables-1.8.4-24.el8.x86_64                                                 3/5 
+  Verifying        : iptables-libs-1.8.5-11.el8.x86_64                                            4/5 
+  Verifying        : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+Installed products updated.
+
+Upgraded:
+  iptables-1.8.5-11.el8.x86_64                    iptables-libs-1.8.5-11.el8.x86_64                   
+Installed:
+  iptables-services-1.8.5-11.el8.x86_64                                                               
+
+Complete!
+[root@stapp02 ~]# systemctl start iptables && systemctl enable iptables
+Created symlink /etc/systemd/system/multi-user.target.wants/iptables.service → /usr/lib/systemd/system/iptables.service.
+[root@stapp02 ~]# iptables -A INPUT -p tcp --destination-port 8086 -s 172.16.238.14 -j ACCEPT
+[root@stapp02 ~]# iptables -A INPUT -p tcp --destination-port 8086 -j DROP
+[root@stapp02 ~]# iptables -L --line-numbers
+# Warning: iptables-legacy tables present, use iptables-legacy to see them
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  anywhere             anywhere            
+3    ACCEPT     all  --  anywhere             anywhere            
+4    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+5    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+6    ACCEPT     tcp  --  stlb01               anywhere             tcp dpt:d-s-n
+7    DROP       tcp  --  anywhere             anywhere             tcp dpt:d-s-n
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stapp02 ~]# iptables -R INPUT 5 -p icmp -j REJECT
+[root@stapp02 ~]# service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]
+[root@stapp02 ~]# systemctl restart iptables && systemctl status iptables
+● iptables.service - IPv4 firewall with iptables
+   Loaded: loaded (/usr/lib/systemd/system/iptables.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Sat 2024-04-06 16:02:55 UTC; 22ms ago
+  Process: 1706 ExecStop=/usr/libexec/iptables/iptables.init stop (code=exited, status=0/SUCCESS)
+  Process: 1747 ExecStart=/usr/libexec/iptables/iptables.init start (code=exited, status=0/SUCCESS)
+ Main PID: 1747 (code=exited, status=0/SUCCESS)
+
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1747]: PR_SET_MM_ARG_START failed, proceeding>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: Starting IPv4 firewall with iptables...
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1747]: iptables.service: Executing: /usr/libe>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com iptables.init[1747]: iptables: Applying firewall rule>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: iptables.service: Child 1747 belongs to i>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: iptables.service: Main process exited, co>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: iptables.service: Changed start -> exited
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: iptables.service: Job iptables.service/st>
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: Started IPv4 firewall with iptables.
+Apr 06 16:02:55 stapp02.stratos.xfusioncorp.com systemd[1]: iptables.service: Failed to send unit cha>
+
+[root@stapp02 ~]#
+
+***********************Verification: ***********************************
+[loki@stlb01 ~]$ curl -I stapp02:8086
+HTTP/1.1 403 Forbidden
+Date: Sat, 06 Apr 2024 16:03:21 GMT
+Server: Apache/2.4.37 (centos)
+Last-Modified: Sun, 27 Jun 2021 23:47:13 GMT
+ETag: "30c0b-5c5c7fdeec240"
+Accept-Ranges: bytes
+Content-Length: 199691
+Content-Type: text/html; charset=UTF-8
+
+[loki@stlb01 ~]$
+thor@jump_host ~$ curl -I stapp02:8086
+curl: (7) Failed to connect to stapp02 port 8086: Connection timed out
+
+************** Server 03- Stapp03 **********************************
+Last login: Sat Apr  6 16:00:15 UTC 2024 on pts/6
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:o1kJbsZUA1/6n6KCBujit6gWlrD5cYdhV+GilocT+aw.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]# yum install  -y iptables-services
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            14 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            24 MB/s |  28 MB     00:01    
+CentOS Stream 8 - BaseOS                                               11 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                              7.1 MB/s |  10 MB     00:01    
+CentOS Stream 8 - Extras                                              7.3 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                               11 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               19 kB/s | 7.7 kB     00:00    
+Docker CE Stable - x86_64                                              36 kB/s | 3.5 kB     00:00    
+Docker CE Stable - x86_64                                             338 kB/s |  60 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        1.3 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                     7.9 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             363 kB/s | 102 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                       Architecture       Version                    Repository          Size
+======================================================================================================
+Installing:
+ iptables-services             x86_64             1.8.5-11.el8               baseos              65 k
+Upgrading:
+ iptables                      x86_64             1.8.5-11.el8               baseos             671 k
+ iptables-libs                 x86_64             1.8.5-11.el8               baseos             103 k
+
+Transaction Summary
+======================================================================================================
+Install  1 Package
+Upgrade  2 Packages
+
+Total download size: 839 k
+Downloading Packages:
+(1/3): iptables-services-1.8.5-11.el8.x86_64.rpm                      313 kB/s |  65 kB     00:00    
+(2/3): iptables-libs-1.8.5-11.el8.x86_64.rpm                          401 kB/s | 103 kB     00:00    
+(3/3): iptables-1.8.5-11.el8.x86_64.rpm                               1.7 MB/s | 671 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 1.7 MB/s | 839 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Upgrading        : iptables-libs-1.8.5-11.el8.x86_64                                            1/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Upgrading        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Running scriptlet: iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Installing       : iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Running scriptlet: iptables-services-1.8.5-11.el8.x86_64                                        3/5 
+  Cleanup          : iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Running scriptlet: iptables-1.8.4-24.el8.x86_64                                                 4/5 
+  Cleanup          : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Running scriptlet: iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+  Verifying        : iptables-services-1.8.5-11.el8.x86_64                                        1/5 
+  Verifying        : iptables-1.8.5-11.el8.x86_64                                                 2/5 
+  Verifying        : iptables-1.8.4-24.el8.x86_64                                                 3/5 
+  Verifying        : iptables-libs-1.8.5-11.el8.x86_64                                            4/5 
+  Verifying        : iptables-libs-1.8.4-24.el8.x86_64                                            5/5 
+Installed products updated.
+
+Upgraded:
+  iptables-1.8.5-11.el8.x86_64                    iptables-libs-1.8.5-11.el8.x86_64                   
+Installed:
+  iptables-services-1.8.5-11.el8.x86_64                                                               
+
+Complete!
+[root@stapp03 ~]# systemctl start iptables && systemctl enable iptables
+Created symlink /etc/systemd/system/multi-user.target.wants/iptables.service → /usr/lib/systemd/system/iptables.service.
+[root@stapp03 ~]# iptables -A INPUT -p tcp --destination-port 8086 -s 172.16.238.14 -j ACCEPT
+[root@stapp03 ~]# iptables -A INPUT -p tcp --destination-port 8086 -j DROP
+[root@stapp03 ~]# iptables -L --line-numbers
+# Warning: iptables-legacy tables present, use iptables-legacy to see them
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+2    ACCEPT     icmp --  anywhere             anywhere            
+3    ACCEPT     all  --  anywhere             anywhere            
+4    ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+5    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+6    ACCEPT     tcp  --  stlb01               anywhere             tcp dpt:d-s-n
+7    DROP       tcp  --  anywhere             anywhere             tcp dpt:d-s-n
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@stapp03 ~]# iptables -R INPUT 5 -p icmp -j REJECT
+[root@stapp03 ~]# service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]
+[root@stapp03 ~]# systemctl restart iptables && systemctl status iptables
+● iptables.service - IPv4 firewall with iptables
+   Loaded: loaded (/usr/lib/systemd/system/iptables.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Sat 2024-04-06 16:07:50 UTC; 22ms ago
+  Process: 1703 ExecStop=/usr/libexec/iptables/iptables.init stop (code=exited, status=0/SUCCESS)
+  Process: 1744 ExecStart=/usr/libexec/iptables/iptables.init start (code=exited, status=0/SUCCESS)
+ Main PID: 1744 (code=exited, status=0/SUCCESS)
+
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Changed dead -> start
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: Starting IPv4 firewall with iptables...
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1744]: iptables.service: Executing: /usr/libe>
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com iptables.init[1744]: iptables: Applying firewall rule>
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Child 1744 belongs to i>
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Main process exited, co>
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Changed start -> exited
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Job iptables.service/st>
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: Started IPv4 firewall with iptables.
+Apr 06 16:07:50 stapp03.stratos.xfusioncorp.com systemd[1]: iptables.service: Failed to send unit cha>
+
+[root@stapp03 ~]#
+
+***** Verification **********************
+[loki@stlb01 ~]$ curl -I stapp03:8086
+HTTP/1.1 403 Forbidden
+Date: Sat, 06 Apr 2024 16:08:02 GMT
+Server: Apache/2.4.37 (centos)
+Last-Modified: Sun, 27 Jun 2021 23:47:13 GMT
+ETag: "30c0b-5c5c7fdeec240"
+Accept-Ranges: bytes
+Content-Length: 199691
+Content-Type: text/html; charset=UTF-8
+
+[loki@stlb01 ~]$
+thor@jump_host ~$ curl -I stapp03:8086
+curl: (7) Failed to connect to stapp02 port 8086: Connection timed out
+
+
