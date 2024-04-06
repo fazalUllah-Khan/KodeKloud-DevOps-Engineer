@@ -1,0 +1,118 @@
+The production support team of xFusionCorp Industries has deployed some of the latest monitoring tools to keep an eye on every service, application, etc. running on the systems. 
+One of the monitoring systems reported about Apache service unavailability on one of the app servers in Stratos DC.
+
+
+Identify the faulty app host and fix the issue. Make sure Apache service is up and running on all app hosts. They might not hosted any code yet on these servers so you need not to worry about 
+if Apache isn't serving any pages or not, just make sure service is up and running. Also, make sure Apache is running on port 3004 on all app servers.
+
+# Solution:
+
+*********************** ISSUE IDENTIFICATION ********************************
+Last login: Sat Apr  6 22:52:36 UTC 2024 on pts/0
+thor@jump_host ~$ telnet stapp01 3004
+Trying 172.16.238.10...
+telnet: connect to address 172.16.238.10: Connection refused
+thor@jump_host ~$ telnet stapp02 3004
+Trying 172.16.238.11...
+Connected to stapp02.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+thor@jump_host ~$ telnet stapp03 3004
+Trying 172.16.238.12...
+Connected to stapp03.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+
+**************** ISSUE TROUBLESHOOTING ******************************************
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:SySamszyWhhLGFiybhGBqfrr8g55wS/3e37ZpBOvICs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]#  systemctl start httpd
+Job for httpd.service failed because the control process exited with error code. See "systemctl status httpd.service" and "journalctl -xe" for details.
+[root@stapp01 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Sat 2024-04-06 22:56:55 UTC; 9s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+  Process: 617 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=1/FAILURE)
+  Process: 616 ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND (code=exited, status=1/FAILURE)
+ Main PID: 616 (code=exited, status=1/FAILURE)
+
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com httpd[616]: AH00558: httpd: Could not reliably de...ge
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com httpd[616]: (98)Address already in use: AH00072: ...04
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com httpd[616]: no listening sockets available, shutt...wn
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com httpd[616]: AH00015: Unable to open logs
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: main process exited, c...RE
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com kill[617]: kill: cannot find process ""
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: control process exited...=1
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com systemd[1]: Failed to start The Apache HTTP Server.
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com systemd[1]: Unit httpd.service entered failed state.
+Apr 06 22:56:55 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service failed.
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stapp01 ~]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      1/init              
+tcp        0      0 127.0.0.11:43921        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      432/sshd            
+tcp        0      0 127.0.0.1:3004          0.0.0.0:*               LISTEN      543/sendmail: accep 
+tcp6       0      0 :::111                  :::*                    LISTEN      410/rpcbind         
+tcp6       0      0 :::22                   :::*                    LISTEN      432/sshd            
+udp        0      0 127.0.0.11:37321        0.0.0.0:*                           -                   
+udp        0      0 0.0.0.0:111             0.0.0.0:*                           1/init              
+udp        0      0 0.0.0.0:987             0.0.0.0:*                           410/rpcbind         
+udp6       0      0 :::111                  :::*                                410/rpcbind         
+udp6       0      0 :::987                  :::*                                410/rpcbind         
+[root@stapp01 ~]# ps -ef  |grep sendmail
+root         543       1  0 22:52 ?        00:00:00 sendmail: accepting connections
+smmsp        550       1  0 22:52 ?        00:00:00 sendmail: Queue runner@01:00:00 for /var/spool/clientmqueue
+root         635     598  0 22:59 pts/0    00:00:00 grep --color=auto sendmail
+[root@stapp01 ~]# kill 543
+[root@stapp01 ~]# systemctl start httpd
+[root@stapp01 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-04-06 22:59:58 UTC; 4s ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+  Process: 617 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=1/FAILURE)
+ Main PID: 639 (httpd)
+   Status: "Processing requests..."
+   CGroup: /docker/6507c8de072e56b23f37653645deff164784baf8deb176991b1f5cc446e18f06/system.slice/httpd.service
+           ├─639 /usr/sbin/httpd -DFOREGROUND
+           ├─640 /usr/sbin/httpd -DFOREGROUND
+           ├─641 /usr/sbin/httpd -DFOREGROUND
+           ├─642 /usr/sbin/httpd -DFOREGROUND
+           ├─643 /usr/sbin/httpd -DFOREGROUND
+           └─644 /usr/sbin/httpd -DFOREGROUND
+
+Apr 06 22:59:58 stapp01.stratos.xfusioncorp.com systemd[1]: Starting The Apache HTTP Server...
+Apr 06 22:59:58 stapp01.stratos.xfusioncorp.com httpd[639]: AH00558: httpd: Could not reliably de...ge
+Apr 06 22:59:58 stapp01.stratos.xfusioncorp.com systemd[1]: Started The Apache HTTP Server.
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@stapp01 ~]#
+
+*************************** ISSUE FIXING POST VERIFICATION **************************************************
+thor@jump_host ~$ telnet stapp01 3004
+Trying 172.16.238.10...
+Connected to stapp01.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+thor@jump_host ~$
