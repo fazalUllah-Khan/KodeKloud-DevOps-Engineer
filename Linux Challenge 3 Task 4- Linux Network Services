@@ -1,0 +1,289 @@
+Our monitoring tool has reported an issue in Stratos Datacenter. One of our app servers has an issue, as its Apache service is not reachable on port 6100 (which is the Apache port). 
+The service itself could be down, the firewall could be at fault, or something else could be causing the issue.
+
+
+Use tools like telnet, netstat, etc. to find and fix the issue. Also make sure Apache is reachable from the jump host without compromising any security settings.
+
+Once fixed, you can test the same using command curl http://stapp01:8082 command from jump host.
+
+# Solution:
+thor@jump_host ~$ telnet stapp01 8082
+Trying 172.16.238.10...
+telnet: connect to address 172.16.238.10: No route to host
+thor@jump_host ~$ telnet stapp02 8082
+Trying 172.16.238.11...
+Connected to stapp02.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+thor@jump_host ~$ telnet stapp03 8082
+Trying 172.16.238.12...
+Connected to stapp03.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:/Tw7W7AhVi/zkUsrDi9V9lKQvBXz5qUwKqqlmEU1of8.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]#  systemctl status httpd &&  systemctl start httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Sat 2024-04-06 15:01:07 UTC; 1min 27s ago
+     Docs: man:httpd.service(8)
+  Process: 749 ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND (code=exited, status=1/FAILURE)
+
+ Main PID: 749 (code=exited, status=1/FAILURE)
+   Status: "Reading configuration..."
+
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com httpd[749]: (98)Address already in use: AH00072: make_
+sock: could not bind to address 0.0.0.0:8082
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com httpd[749]: no listening sockets available, shutting d
+own
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com httpd[749]: AH00015: Unable to open logs
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Chi
+ld 749 belongs to httpd.service.
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Mai
+n process exited, code=exited, status=1/FAILURE
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Fai
+led with result 'exit-code'.
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged start -> failed
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/start finished, result=failed
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: Failed to start Th
+e Apache HTTP Server.
+Apr 06 15:01:07 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Uni
+t entered failed state.
+[root@stapp01 ~]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:36263        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:8082          0.0.0.0:*               LISTEN      688/sendmail: accep 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      547/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      547/sshd            
+udp        0      0 127.0.0.11:52292        0.0.0.0:*                           -                   
+[root@stapp01 ~]# ps -ef |grep 688
+root         688       1  0 15:01 ?        00:00:00 sendmail: accepting connections
+root         915     865  0 15:03 pts/0    00:00:00 grep --color=auto 688
+[root@stapp01 ~]# kil 688
+-bash: kil: command not found
+[root@stapp01 ~]# kill 688
+[root@stapp01 ~]# ps -ef |grep 688
+root         949     865  0 15:04 pts/0    00:00:00 grep --color=auto 688
+[root@stapp01 ~]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:36263        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      547/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      547/sshd            
+udp        0      0 127.0.0.11:52292        0.0.0.0:*                           -                   
+[root@stapp01 ~]# systemctl start httpd
+[root@stapp01 ~]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:36263        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:8082            0.0.0.0:*               LISTEN      995/httpd           
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      547/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      547/sshd            
+udp        0      0 127.0.0.11:52292        0.0.0.0:*                           -                   
+[root@stapp01 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-04-06 15:05:01 UTC; 24s ago
+     Docs: man:httpd.service(8)
+ Main PID: 995 (httpd)
+   Status: "Running, listening on: port 8082"
+    Tasks: 213 (limit: 1340692)
+   Memory: 18.8M
+   CGroup: /docker/07f30cec9ca91fd6502439edf5fd3f147972c5e9a9f12ba9e50beae636fb6dc9/system.slice/httpd
+.service
+           ├─ 995 /usr/sbin/httpd -DFOREGROUND
+           ├─1020 /usr/sbin/httpd -DFOREGROUND
+           ├─1021 /usr/sbin/httpd -DFOREGROUND
+           ├─1022 /usr/sbin/httpd -DFOREGROUND
+           └─1023 /usr/sbin/httpd -DFOREGROUND
+
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (RELOADING=1, STATUS=Reading configuration...)
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 187
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com httpd[995]: Server configured, listening on: port 8082
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Configuration loaded.)
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 06 15:05:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Started, listening on: port 8082, MAINPID=995)
+Apr 06 15:05:10 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Running, listening on: port 8082)
+Apr 06 15:05:20 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 995 (READY=1, STATUS=Running, listening on: port 8082)
+[root@stapp01 ~]# netstat tulnp
+usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
+       netstat [-vWnNcaeol] [<Socket> ...]
+       netstat { [-vWeenNac] -I[<Iface>] | [-veenNac] -i | [-cnNe] -M | -s [-6tuw] } [delay]
+
+        -r, --route              display routing table
+        -I, --interfaces=<Iface> display interface table for <Iface>
+        -i, --interfaces         display interface table
+        -g, --groups             display multicast group memberships
+        -s, --statistics         display networking statistics (like SNMP)
+        -M, --masquerade         display masqueraded connections
+
+        -v, --verbose            be verbose
+        -W, --wide               don't truncate IP addresses
+        -n, --numeric            don't resolve names
+        --numeric-hosts          don't resolve host names
+        --numeric-ports          don't resolve port names
+        --numeric-users          don't resolve user names
+        -N, --symbolic           resolve hardware names
+        -e, --extend             display other/more information
+        -p, --programs           display PID/Program name for sockets
+        -o, --timers             display timers
+        -c, --continuous         continuous listing
+
+        -l, --listening          display listening server sockets
+        -a, --all                display all sockets (default: connected)
+        -F, --fib                display Forwarding Information Base (default)
+        -C, --cache              display routing cache instead of FIB
+        -Z, --context            display SELinux security context for sockets
+
+  <Socket>={-t|--tcp} {-u|--udp} {-U|--udplite} {-S|--sctp} {-w|--raw}
+           {-x|--unix} --ax25 --ipx --netrom
+  <AF>=Use '-6|-4' or '-A <af>' or '--<af>'; default: inet
+  List of possible address families (which support routing):
+    inet (DARPA Internet) inet6 (IPv6) ax25 (AMPR AX.25) 
+    netrom (AMPR NET/ROM) ipx (Novell IPX) ddp (Appletalk DDP) 
+    x25 (CCITT X.25) 
+[root@stapp01 ~]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:36263        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:8082            0.0.0.0:*               LISTEN      995/httpd           
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      547/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      547/sshd            
+udp        0      0 127.0.0.11:52292        0.0.0.0:*                           -                   
+[root@stapp01 ~]# httpd -t
+Syntax OK
+[root@stapp01 ~]# vi /etc/httpd/conf/h
+[root@stapp01 ~]# vi /etc/httpd/conf
+[root@stapp01 ~]# ls
+anaconda-ks.cfg  anaconda-post-nochroot.log  anaconda-post.log  buildinfo  original-ks.cfg
+[root@stapp01 ~]# cd /etc/httpd
+[root@stapp01 httpd]# ls
+conf  conf.d  conf.modules.d  logs  modules  run  state
+[root@stapp01 httpd]# cd /etc/httpd/conf
+[root@stapp01 conf]# ls
+httpd.conf  magic
+[root@stapp01 conf]# cd ..
+[root@stapp01 httpd]# cd ..
+[root@stapp01 etc]# cd ..
+[root@stapp01 /]# cd ..
+[root@stapp01 /]# vi /etc/httpd/conf/httpd.conf
+[root@stapp01 /]# systemctl restart httpd
+[root@stapp01 /]# httpd -t
+Syntax OK
+[root@stapp01 /]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sat 2024-04-06 15:13:24 UTC; 35s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1320 (httpd)
+   Status: "Running, listening on: port 8082"
+    Tasks: 213 (limit: 1340692)
+   Memory: 18.8M
+   CGroup: /docker/07f30cec9ca91fd6502439edf5fd3f147972c5e9a9f12ba9e50beae636fb6dc9/system.slice/httpd
+.service
+           ├─1320 /usr/sbin/httpd -DFOREGROUND
+           ├─1334 /usr/sbin/httpd -DFOREGROUND
+           ├─1335 /usr/sbin/httpd -DFOREGROUND
+           ├─1336 /usr/sbin/httpd -DFOREGROUND
+           └─1337 /usr/sbin/httpd -DFOREGROUND
+
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 219
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com httpd[1320]: Server configured, listening on: port 808
+2
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1320 (READY=1, STATUS=Configuration loaded.)
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 06 15:13:24 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1320 (READY=1, STATUS=Started, listening on: port 8082, MAINPID=1320)
+
+Apr 06 15:13:33 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1320 (READY=1, STATUS=Running, listening on: port 8082)
+Apr 06 15:13:43 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1320 (READY=1, STATUS=Running, listening on: port 8082)
+Apr 06 15:13:53 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1320 (READY=1, STATUS=Running, listening on: port 8082)
+[root@stapp01 /]# netstat -tulnp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:36263        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:8082            0.0.0.0:*               LISTEN      1320/httpd          
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      547/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      547/sshd            
+udp        0      0 127.0.0.11:52292        0.0.0.0:*                           -                   
+[root@stapp01 /]# firewall -l
+-bash: firewall: command not found
+[root@stapp01 /]# iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere            
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+# Warning: iptables-legacy tables present, use iptables-legacy to see them
+[root@stapp01 /]# iptables -
+Bad argument `-'
+Try `iptables -h' or 'iptables --help' for more information.
+[root@stapp01 /]# iptables -F
+[root@stapp01 /]#
+
+******************* After every troubleshoot check Stapp-01 ***********************************
+Last login: Sat Apr  6 15:01:18 UTC 2024 on pts/0
+thor@jump_host ~$ telnet stapp01 8082
+Trying 172.16.238.10...
+telnet: connect to address 172.16.238.10: No route to host
+thor@jump_host ~$ telnet stapp01 8082
+Trying 172.16.238.10...
+telnet: connect to address 172.16.238.10: No route to host
+thor@jump_host ~$ telnet stapp01 8082
+Trying 172.16.238.10...
+Connected to stapp01.
+Escape character is '^]'.
+^C
+Connection closed by foreign host.
+thor@jump_host ~$
+
+After iptables -f (format) issue was resolved.
