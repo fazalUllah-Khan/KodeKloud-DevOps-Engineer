@@ -1,0 +1,209 @@
+The Nautilus DevOps team want to install and set up a simple httpd web server on all app servers in Stratos DC. They also want to deploy a sample web page using Ansible. Therefore, write the required playbook to complete this task as per details mentioned below.
+
+We already have an inventory file under /home/thor/ansible directory on jump host. Write a playbook playbook.yml under /home/thor/ansible directory on jump host itself. Using the playbook perform below given tasks:
+
+1.	Install httpd web server on all app servers, and make sure its service is up and running.
+
+2.	Create a file /var/www/html/index.html with content:
+
+This is a Nautilus sample file, created using Ansible!
+
+3.	Using lineinfile Ansible module add some more content in /var/www/html/index.html file. Below is the content:
+
+Welcome to Nautilus Group!
+
+Also make sure this new line is added at the top of the file.
+
+4.	The /var/www/html/index.html file's user and group owner should be apache on all app servers.
+
+5.	The /var/www/html/index.html file's permissions should be 0777 on all app servers.
+
+Note: Validation will try to run the playbook using command ansible-playbook -i inventory playbook.yml so please make sure the playbook works this way without passing any extra arguments.
+
+
+************* # Solution *************************************************************
+Last login: Sun Apr  7 21:49:17 UTC 2024 on pts/0
+thor@jump_host ~$ ls
+ansible
+thor@jump_host ~$ cd /home/thor/ansible
+thor@jump_host ~/ansible$ ls -l
+total 8
+-rw-r--r-- 1 thor thor  36 Apr  7 21:48 ansible.cfg
+-rw-r--r-- 1 thor thor 237 Apr  7 21:48 inventory
+thor@jump_host ~/ansible$ vi /home/thor/ansible/playbook.yml
+thor@jump_host ~/ansible$ cat /home/thor/ansible/playbook.yml
+- hosts: stapp01, stapp02, stapp03
+  gather_facts: false
+  become: true
+
+  vars:
+    package: httpd
+    index_file: /var/www/html/index.html
+
+  tasks:
+    - package:
+        name: "{{ package }}"
+        state: present
+    - service:
+        name: "{{ package }}"
+        state: started
+        enabled: true
+    - copy:
+        dest: "{{ index_file }}"
+        content: |
+          This is a Nautilus sample file, created using Ansible!
+        mode: 0777
+    - lineinfile:
+        path: "{{ index_file }}"
+        insertbefore: BOF
+        group: apache
+        owner: apache
+        state: present
+        line: "Welcome to Nautilus Group!"
+thor@jump_host ~/ansible$ ansible-playbook -i inventory playbook.yml
+
+PLAY [stapp01, stapp02, stapp03] *********************************************************************
+
+TASK [package] ***************************************************************************************
+changed: [stapp01]
+changed: [stapp02]
+changed: [stapp03]
+
+TASK [service] ***************************************************************************************
+changed: [stapp02]
+changed: [stapp01]
+changed: [stapp03]
+
+TASK [copy] ******************************************************************************************
+changed: [stapp03]
+changed: [stapp02]
+changed: [stapp01]
+
+TASK [lineinfile] ************************************************************************************
+changed: [stapp03]
+changed: [stapp02]
+changed: [stapp01]
+
+PLAY RECAP *******************************************************************************************
+stapp01                    : ok=4    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp02                    : ok=4    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp03                    : ok=4    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+thor@jump_host ~/ansible$ ansible all -i inventory -m command -a "cat /var/www/html/index.html"
+stapp02 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+stapp03 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+stapp01 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+thor@jump_host ~/ansible$
+
+*******************************************METHOD 2 ***********************************************************
+***************************************************************************************************************
+The Nautilus DevOps team want to install and set up a simple httpd web server on all app servers in Stratos DC. They also want to deploy a sample web page using Ansible. Therefore, write the required playbook to complete this task as per details mentioned below.
+
+We already have an inventory file under /home/thor/ansible directory on jump host. Write a playbook playbook.yml under /home/thor/ansible directory on jump host itself. Using the playbook perform below given tasks:
+
+1.	Install httpd web server on all app servers, and make sure its service is up and running.
+
+2.	Create a file /var/www/html/index.html with content:
+
+This is a Nautilus sample file, created using Ansible!
+
+3.	Using lineinfile Ansible module add some more content in /var/www/html/index.html file. Below is the content:
+
+Welcome to Nautilus Group!
+
+Also make sure this new line is added at the top of the file.
+
+4.	The /var/www/html/index.html file's user and group owner should be apache on all app servers.
+
+5.	The /var/www/html/index.html file's permissions should be 0777 on all app servers.
+
+Note: Validation will try to run the playbook using command ansible-playbook -i inventory playbook.yml so please make sure the playbook works this way without passing any extra arguments.
+
+******************************** # Solution ******************************************************
+thor@jump_host ~$ ls 
+ansible
+thor@jump_host ~$ cd /home/thor/ansible
+thor@jump_host ~/ansible$ ls -l
+total 8
+-rw-r--r-- 1 thor thor  36 Apr  7 22:06 ansible.cfg
+-rw-r--r-- 1 thor thor 237 Apr  7 22:06 inventory
+thor@jump_host ~/ansible$ vi /home/thor/ansible/playbook.yml
+thor@jump_host ~/ansible$ cat /home/thor/ansible/playbook.yml
+---
+- name: Service httpd
+  hosts: stapp01, stapp02, stapp03
+  become: yes
+  tasks:
+    - name: Install the latest version of httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+    - name: Start httpd
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Create the index.html file
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+            This is a Nautilus sample file, created using Ansible!
+    - name: Add a line to a file
+      ansible.builtin.lineinfile:
+        path: /var/www/html/index.html
+        line: Welcome to Nautilus Group!
+        insertbefore: BOF
+        mode: '0777'        
+        owner: 'apache'
+        group: 'apache'
+thor@jump_host ~/ansible$ ansible-playbook -i inventory playbook.yml
+
+PLAY [Service httpd] *********************************************************************************
+
+TASK [Gathering Facts] *******************************************************************************
+ok: [stapp03]
+ok: [stapp02]
+ok: [stapp01]
+
+TASK [Install the latest version of httpd] ***********************************************************
+changed: [stapp02]
+changed: [stapp03]
+changed: [stapp01]
+
+TASK [Start httpd] ***********************************************************************************
+changed: [stapp01]
+changed: [stapp02]
+changed: [stapp03]
+
+TASK [Create the index.html file] ********************************************************************
+changed: [stapp02]
+changed: [stapp03]
+changed: [stapp01]
+
+TASK [Add a line to a file] **************************************************************************
+changed: [stapp01]
+changed: [stapp03]
+changed: [stapp02]
+
+PLAY RECAP *******************************************************************************************
+stapp01                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp02                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp03                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+thor@jump_host ~/ansible$ ansible all -i inventory -m command -a "cat /var/www/html/index.html"
+stapp01 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+stapp03 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+stapp02 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!
+thor@jump_host ~/ansible$
