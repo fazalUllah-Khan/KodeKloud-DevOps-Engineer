@@ -1,0 +1,73 @@
+
+The Nautilus application development team was working on a git repository /usr/src/kodekloudrepos/apps present on Storage server in Stratos DC. This was just a test repository and one of the developers 
+just pushed a couple of changes for testing, but now they want to clean this repository along with the commit history/work tree, so they want to point back the HEAD and the branch itself to a commit 
+with message add data.txt file. Find below more details:
+
+
+1.	In /usr/src/kodekloudrepos/apps git repository, reset the git commit history so that there are only two commits in the commit history i.e initial commit and add data.txt file.
+
+2.	Also make sure to push your changes.
+
+
+********** # Solution ************************
+thor@jump_host ~$ ssh natasha@ststor01
+The authenticity of host 'ststor01 (172.16.238.15)' can't be established.
+ECDSA key fingerprint is SHA256:JPUjOAYBruwimjcHjYv/0wH5/z/V74/2LkWXnJmHd1M.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'ststor01,172.16.238.15' (ECDSA) to the list of known hosts.
+natasha@ststor01's password: 
+[natasha@ststor01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for natasha: 
+[root@ststor01 ~]# ls -l /usr/src/kodekloudrepos/apps/
+total 8
+-rw-r--r-- 1 root root 32 Apr  7 16:48 apps.txt
+-rw-r--r-- 1 root root 10 Apr  7 16:48 info.txt
+[root@ststor01 ~]# cd /usr/src/kodekloudrepos/apps/
+[root@ststor01 apps]# git branch -a
+* master
+  remotes/origin/master
+[root@ststor01 apps]# git log --oneline
+e28a247 (HEAD -> master, origin/master) Test Commit10
+cdc0ec6 Test Commit9
+3e73e53 Test Commit8
+6360ba7 Test Commit7
+c799d34 Test Commit6
+0504437 Test Commit5
+a5ad920 Test Commit4
+8d17322 Test Commit3
+a3b9ab4 Test Commit2
+ac460de Test Commit1
+f14b2cf add data.txt file
+9688ab6 initial commit
+[root@ststor01 apps]# git reset --hard HEAD~10
+HEAD is now at f14b2cf add data.txt file
+[root@ststor01 apps]# git log --oneline
+f14b2cf (HEAD -> master) add data.txt file
+9688ab6 initial commit
+[root@ststor01 apps]# git push
+To /opt/apps.git
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to '/opt/apps.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+[root@ststor01 apps]# git push --force
+Total 0 (delta 0), reused 0 (delta 0), pack-reused 0
+To /opt/apps.git
+ + e28a247...f14b2cf master -> master (forced update)
+[root@ststor01 apps]# git pull
+Already up to date.
+[root@ststor01 apps]# git log --oneline
+f14b2cf (HEAD -> master, origin/master) add data.txt file
+9688ab6 initial commit
+[root@ststor01 apps]#
+
