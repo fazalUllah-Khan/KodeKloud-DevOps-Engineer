@@ -1,0 +1,200 @@
+Developers are looking for dependencies to be installed and run on Nautilus app servers in Stratos DC. They have shared some requirements with the DevOps team. Because we are now managing packages installation and services management using Ansible, some playbooks need to be created and tested. As per details mentioned below please complete the task:
+
+
+a. On jump host create an Ansible playbook /home/thor/ansible/playbook.yml and configure it to install httpd on all app servers.
+
+b. After installation make sure to start and enable httpd service on all app servers.
+
+c. The inventory /home/thor/ansible/inventory is already there on jump host.
+
+d. Make sure user thor should be able to run the playbook on jump host.
+
+Note: Validation will try to run playbook using command ansible-playbook -i inventory playbook.yml so please make sure playbook works this way, without passing any extra arguments.
+
+********************************** # Solution ******************************************************
+
+thor@jump_host ~$ ls -l
+total 4
+drwxr-xr-x 2 thor thor 4096 Apr  7 22:17 ansible
+thor@jump_host ~$ cd /home/thor/ansible/inventory
+bash: cd: /home/thor/ansible/inventory: Not a directory
+thor@jump_host ~$ cd /home/thor/ansible/
+thor@jump_host ~/ansible$ ls -l
+total 4
+-rw-r--r-- 1 thor thor 237 Apr  7 22:17 inventory
+thor@jump_host ~/ansible$ vi /home/thor/ansible/playbook.yml
+thor@jump_host ~/ansible$ cat /home/thor/ansible/playbook.yml
+- hosts: stapp01, stapp02, stapp03
+  gather_facts: false
+  become: true
+
+  vars:
+    package: httpd
+
+
+  tasks:
+    - package:
+        name: "{{ package }}"
+        state: present
+    - service:
+        name: "{{ package }}"
+        state: started
+        enabled: true
+thor@jump_host ~/ansible$ ansible-playbook -i inventory playbook.yml
+
+PLAY [stapp01, stapp02, stapp03] *********************************************************************
+
+TASK [package] ***************************************************************************************
+changed: [stapp01]
+changed: [stapp03]
+changed: [stapp02]
+
+TASK [service] ***************************************************************************************
+changed: [stapp02]
+changed: [stapp01]
+changed: [stapp03]
+
+PLAY RECAP *******************************************************************************************
+stapp01                    : ok=2    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp02                    : ok=2    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp03                    : ok=2    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+thor@jump_host ~/ansible$ systemctl status httpd
+Unit httpd.service could not be found.
+thor@jump_host ~/ansible$
+
+
+******************************* Verification ****************************************
+
+******** SERVER 01 *****************************************
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:1BIWyC6HR6ECJJv69XRk7Weopj+xL5iNV717pL0n0bQ.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+Last login: Sun Apr  7 22:24:00 2024 from 172.16.238.3
+[tony@stapp01 ~]$ sudo systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sun 2024-04-07 22:24:02 UTC; 2min 19s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1490 (httpd)
+   Status: "Running, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.2M
+   CGroup: /docker/b710040dea9b5330af6a61f4fc8962cb936eed9ecaa7f8a15ac197e37c2a6019/system.slice/httpd
+.service
+           ├─1490 /usr/sbin/httpd -DFOREGROUND
+           ├─1516 /usr/sbin/httpd -DFOREGROUND
+           ├─1517 /usr/sbin/httpd -DFOREGROUND
+           ├─1518 /usr/sbin/httpd -DFOREGROUND
+           └─1519 /usr/sbin/httpd -DFOREGROUND
+
+Apr 07 22:24:41 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:24:51 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:11 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:21 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:31 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:41 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:51 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1490 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:01 stapp01.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+--More--
+**************************** SERVER 02 **************************************************
+Last login: Sun Apr  7 22:24:24 UTC 2024 on pts/2
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:/IGQTUT7kfCVRfR5VYKCQb7AWcteeE66maTAuMRIfzU.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+Last login: Sun Apr  7 22:24:00 2024 from 172.16.238.3
+[steve@stapp02 ~]$ sudo systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sun 2024-04-07 22:24:02 UTC; 3min 6s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1486 (httpd)
+   Status: "Running, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.3M
+   CGroup: /docker/ac3ac89b04c5379076cfa8be03de2d831dcf86f7565f8ee763e79b48526b686a/system.slice/httpd
+.service
+           ├─1486 /usr/sbin/httpd -DFOREGROUND
+           ├─1511 /usr/sbin/httpd -DFOREGROUND
+           ├─1512 /usr/sbin/httpd -DFOREGROUND
+           ├─1513 /usr/sbin/httpd -DFOREGROUND
+           └─1514 /usr/sbin/httpd -DFOREGROUND
+
+Apr 07 22:25:31 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:41 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:25:51 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:01 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:11 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:21 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:31 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:41 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1486 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:51 stapp02.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+--More--
+***********************SERVER 03 *********************************
+Last login: Sun Apr  7 22:26:28 UTC 2024 on pts/4
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:XW3xw6DwaaTVpaaBhulphcQ0jMa7UfYQ4nR3kg554XU.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+Last login: Sun Apr  7 22:24:00 2024 from 172.16.238.3
+[banner@stapp03 ~]$ sudo systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sun 2024-04-07 22:24:02 UTC; 3min 51s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1482 (httpd)
+   Status: "Running, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.6M
+   CGroup: /docker/f0385fbfd3767259ebdc7134282bdd91da59521be22934a5b8fd66483b68b190/system.slice/httpd
+.service
+           ├─1482 /usr/sbin/httpd -DFOREGROUND
+           ├─1508 /usr/sbin/httpd -DFOREGROUND
+           ├─1509 /usr/sbin/httpd -DFOREGROUND
+           ├─1510 /usr/sbin/httpd -DFOREGROUND
+           └─1511 /usr/sbin/httpd -DFOREGROUND
+
+Apr 07 22:26:22 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:32 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:42 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:26:52 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:27:02 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:27:12 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:27:22 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:27:32 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+Apr 07 22:27:42 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1482 (READY=1, STATUS=Running, listening on: port 80)
+--More--
