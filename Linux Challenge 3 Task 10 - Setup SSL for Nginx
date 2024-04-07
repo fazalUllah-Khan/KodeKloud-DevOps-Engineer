@@ -1,0 +1,81 @@
+
+The system admins team of xFusionCorp Industries needs to deploy a new application on App Server 2 in Stratos Datacenter. They have some pre-requites to get ready that server for application deployment. Prepare the server as per requirements shared below:
+
+
+1. Install and configure nginx on App Server 2.
+
+2. On App Server 2 there is a self signed SSL certificate and key present at location /tmp/nautilus.crt and /tmp/nautilus.key. Move them to some appropriate location and deploy the same in Nginx.
+
+3. Create an index.html file with content Welcome! under Nginx document root.
+
+4. For final testing try to access the App Server 2 link (either hostname or IP) from jump host using curl command. For example curl -Ik https://<app-server-ip>/.
+
+# Solution:
+1. Login to ssh steve@stapp02 --> Enter Password
+2. sudo su - -> Enter password 
+3. install packages 
+   yum update -y
+   yum install epel-release -y
+   yum install nginx -y
+4. Enable , start and check status of Nginx server
+   systemctl start nginx
+   systemctl enable nginx
+   systemctl status nginx
+5. install mod_ssl package 
+   yum -y install mod_ssl
+6. cd /usr/share/nginx/html , ls and unkink html (unlink index.html)
+7. vi index.html --> and add welcome !
+8. cd /tmp/ , cat nautilus.crt, cat nautilus.key , ls -la (optional step)
+9. chmod 777 nautilus.crt nautilus.key ( allow follow permision to use file) , ls -la 
+10. Now copy the file 
+   cp nautilus.crt /usr/share/nginx/html/
+   cp nautilus.key /usr/share/nginx/html/
+11. verify file is copied 
+    cd /usr/share/nginx/html/ , ls (make sure files are there)
+12. modify nginx.conf file 
+    vi /etc/nginx/nginx.conf
+  ************ Update Server Section as below **********************
+    server {
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        listen       443 ssl;
+        server_name  172.16.238.11;
+        root         /usr/share/nginx/html;
+        index       index.html
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS;
+        ssl_certificate      /usr/share/nginx/html/nautilus.crt;
+        ssl_certificate_key  /usr/share/nginx/html/nautilus.key;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+        }
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    }
+
+13.  systemctl restart nginx, systemctl status nginx
+14. Verification 
+     thor@jump_host ~$ curl -Ik https://172.16.238.11/
+    curl: (35) OpenSSL SSL_connect: SSL_ERROR_SYSCALL in connection to 172.16.238.11:443 
+    thor@jump_host ~$ curl -Ik https://172.16.238.11/
+      HTTP/1.1 200 OK
+      Server: nginx/1.14.1
+      Date: Sun, 07 Apr 2024 14:35:02 GMT
+      Content-Type: text/html
+      Content-Length: 9
+      Last-Modified: Sun, 07 Apr 2024 14:14:09 GMT
+      Connection: keep-alive
+      ETag: "6612aa31-9"
+      Accept-Ranges: bytes
+
+thor@jump_host ~$
