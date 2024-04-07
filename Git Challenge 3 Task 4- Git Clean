@@ -1,0 +1,33 @@
+The Nautilus application development team was working on a git repository /usr/src/kodekloudrepos/official present on Storage server in Stratos DC. One of the developers mistakenly created a couple of 
+files under this repository, but now they want to clean this repository without adding/pushing any new files. Find below more details:
+
+
+Clean the /usr/src/kodekloudrepos/official git repository without adding/pushing any new files, make sure git status is clean.
+
+********************* # Solution ******************************
+1. Login Nautilus Storage Server ssh natasha@ststor01 and sudo su -  {Enter required password}\
+2. cd /usr/src/kodekloudrepos/official/
+3. git clean -i
+   read all files and give option 
+   *** Commands ***
+    1: clean                2: filter by pattern    3: select by numbers    4: ask each
+    5: quit                 6: help
+    What now> 
+4. Select 1 and enter 
+   What now> 1
+5. It will clean all files e.g
+   .................
+   Removing y9721.rpm
+   Removing y982.yaml
+
+
+**** Verification *************
+No file found and even when we run clear statement again it didnt found anything to clean
+[root@ststor01 official]# git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+[root@ststor01 official]# git clean -i
+[root@ststor01 official]# 
+
