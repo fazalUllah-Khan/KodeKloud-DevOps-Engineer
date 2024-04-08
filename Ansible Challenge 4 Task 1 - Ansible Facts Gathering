@@ -1,0 +1,158 @@
+The Nautilus DevOps team is trying to setup a simple Apache web server on all app servers in Stratos DC using Ansible. They also want to create a sample html page for now with some app specific data on it. Below you can find more details about the task.
+
+You will find a valid inventory file /home/thor/playbooks/inventory on jump host (which we are using as an Ansible controller).
+
+1.	Create a playbook index.yml under /home/thor/playbooks directory on jump host. Using blockinfile Ansible module create a file facts.txt under /root directory on all app servers and add the following given block in it. You will need to enable facts gathering for this task.
+
+Ansible managed node architecture is <architecture>
+
+
+(You can obtain the system architecture from Ansible's gathered facts by using the correct Ansible variable while taking into account Jinja2 syntax)
+
+2.	Install httpd server on all apps. After that make a copy of facts.txt file as index.html under /var/www/html directory. Make sure to start httpd service after that.
+
+Note: Do not create a separate role for this task, just add all of the changes in index.yml playbook.
+
+******************* # Solution  ********************************************
+thor@jump_host ~$ curl http://stapp01
+curl: (7) Failed to connect to stapp01 port 80: Connection refused
+thor@jump_host ~$ curl http://stapp02
+curl: (7) Failed to connect to stapp02 port 80: Connection refused
+thor@jump_host ~$ curl http://stapp03
+curl: (7) Failed to connect to stapp03 port 80: Connection refused
+thor@jump_host ~$ ls -l
+total 4
+drwxr-xr-x 2 thor thor 4096 Apr  8 22:00 playbooks
+thor@jump_host ~$ cd /home/thor/playbooks
+thor@jump_host ~/playbooks$ ls -l
+total 8
+-rw-r--r-- 1 thor thor  36 Apr  8 22:00 ansible.cfg
+-rw-r--r-- 1 thor thor 237 Apr  8 22:00 inventory
+thor@jump_host ~/playbooks$ vi index.yml
+thor@jump_host ~/playbooks$ cat index.yml
+
+- hosts: stapp01, stapp02, stapp03
+  gather_facts: true
+  become: true
+
+  vars:
+    facts_file: /root/facts.txt
+    package: httpd
+    dest: /var/www/html
+
+  tasks:
+    - blockinfile:
+        path: "{{ facts_file }}"
+        create: true
+        block: |
+          Ansible managed node architecture is {{ ansible_architecture }}
+    - package:
+        name: httpd
+        state: present
+    - copy:
+        src: "{{ facts_file }}"
+        dest: "{{ dest }}/index.html"
+        remote_src: true
+    - service:
+        name: "{{ package }}"
+        state: started
+
+thor@jump_host ~/playbooks$ ansible-playbook -i inventory index.yml
+
+PLAY [stapp01, stapp02, stapp03] *********************************************************************
+
+TASK [Gathering Facts] *******************************************************************************
+ok: [stapp03]
+ok: [stapp02]
+ok: [stapp01]
+
+TASK [blockinfile] ***********************************************************************************
+changed: [stapp03]
+changed: [stapp02]
+changed: [stapp01]
+
+TASK [package] ***************************************************************************************
+changed: [stapp01]
+changed: [stapp02]
+changed: [stapp03]
+
+TASK [copy] ******************************************************************************************
+changed: [stapp02]
+changed: [stapp01]
+changed: [stapp03]
+
+TASK [service] ***************************************************************************************
+changed: [stapp01]
+changed: [stapp03]
+changed: [stapp02]
+
+PLAY RECAP *******************************************************************************************
+stapp01                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp02                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+stapp03                    : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+thor@jump_host ~/playbooks$ curl http://stapp01
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$ curl http://stapp02
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$ curl http://stapp03
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$
+
+
+
+********************* Verification ****************************************
+thor@jump_host ~/playbooks$ curl http://stapp01
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$ curl http://stapp02
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$ curl http://stapp03
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+thor@jump_host ~/playbooks$
+
+
+
+******* Check File Exist and it content on Stapp01 and same for other servers. *****************
+Last login: Mon Apr  8 22:00:29 UTC 2024 on pts/0
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:DMm4t7ZcgHvSrePjS5XxbHqHKCpPdmV8TXAFWXPcc1A.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+Last login: Mon Apr  8 22:05:52 2024 from 172.16.238.3
+[tony@stapp01 ~]$ sudo su -
+[root@stapp01 ~]# ls -l /root
+total 44
+-rw------- 1 root root 9810 Feb  7  2023 anaconda-ks.cfg
+-rw-r--r-- 1 root root   95 Feb  7  2023 anaconda-post-nochroot.log
+-rw-r--r-- 1 root root 1083 Feb  7  2023 anaconda-post.log
+drwxr-xr-x 1 root root 4096 Feb  7  2023 buildinfo
+-rw-r--r-- 1 root root  102 Apr  8 22:04 facts.txt
+-rw------- 1 root root 9606 Feb  7  2023 original-ks.cfg
+[root@stapp01 ~]# cat /root/facts.txt
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+[root@stapp01 ~]# ls -l /var/www/html
+total 4
+-rw-r--r-- 1 root root 102 Apr  8 22:04 index.html
+[root@stapp01 ~]# cat /var/www/html/facts.txt
+cat: /var/www/html/facts.txt: No such file or directory
+[root@stapp01 ~]# cat /var/www/html/index.html
+# BEGIN ANSIBLE MANAGED BLOCK
+Ansible managed node architecture is x86_64
+# END ANSIBLE MANAGED BLOCK
+[root@stapp01 ~]#
