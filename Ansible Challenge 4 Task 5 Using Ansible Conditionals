@@ -1,0 +1,106 @@
+The Nautilus DevOps team had a discussion about, how they can train different team members to use Ansible for different automation tasks. There are numerous ways to perform a particular task using Ansible, 
+but we want to utilize each aspect that Ansible offers. The team wants to utilise Ansible's conditionals to perform the following task:
+
+An inventory file is already placed under /home/thor/ansible directory on jump host, with all the Stratos DC app servers included.
+
+Create a playbook /home/thor/ansible/playbook.yml and make sure to use Ansible's when conditionals statements to perform the below given tasks.
+
+            1.	Copy blog.txt file present under /usr/src/finance directory on jump host to App Server 1 under /opt/finance directory. Its user and group owner must be user tony and its permissions must be 0655 .
+
+            2.	Copy story.txt file present under /usr/src/finance directory on jump host to App Server 2 under /opt/finance directory. Its user and group owner must be user steve and its permissions must be 0655 .
+
+            3.	Copy media.txt file present under /usr/src/finance directory on jump host to App Server 3 under /opt/finance directory. Its user and group owner must be user banner and its permissions must be 0655.
+
+NOTE: You can use ansible_nodename variable from gathered facts with when condition. Additionally, please make sure you are running the play for all hosts i.e use - hosts: all.
+
+Note: Validation will try to run the playbook using command ansible-playbook -i inventory playbook.yml, so please make sure the playbook works this way without passing any extra arguments.
+
+*************** # Solution ***************************************************************
+
+thor@jump_host ~$ ls -l
+total 4
+drwxr-xr-x 2 thor thor 4096 Apr  9 09:34 ansible
+thor@jump_host ~$ cd /home/thor/ansible
+thor@jump_host ~/ansible$ ansible all -a "ls -ltr /opt/finance" -i inventory
+stapp03 | CHANGED | rc=0 >>
+total 0
+stapp01 | CHANGED | rc=0 >>
+total 0
+stapp02 | CHANGED | rc=0 >>
+total 0
+thor@jump_host ~/ansible$ vi playbook.yml
+thor@jump_host ~/ansible$ cat playbook.yml
+- name: Copy text files to Appservers
+  hosts: stapp01, stapp02, stapp03
+  become: yes
+  tasks:
+    - name: Copy blog.txt to stapp01
+      ansible.builtin.copy:
+        src: /usr/src/finance/blog.txt
+        dest: /opt/finance/
+        owner: tony
+        group: tony
+        mode: "0655"
+      when: inventory_hostname == "stapp01"
+    - name: Copy story.txt to stapp02
+      ansible.builtin.copy:
+        src: /usr/src/finance/story.txt
+        dest: /opt/finance/
+        owner: steve
+        group: steve
+        mode: "0655"
+      when: inventory_hostname == "stapp02"
+    - name: Copy media.txt to stapp03
+      ansible.builtin.copy:
+        src: /usr/src/finance/media.txt
+        dest: /opt/finance/
+        owner: banner
+        group: banner
+        mode: "0655"
+      when: inventory_hostname == "stapp03"
+thor@jump_host ~/ansible$ ansible-playbook -i inventory playbook.yml
+
+PLAY [Copy text files to Appservers] *****************************************************************
+
+TASK [Gathering Facts] *******************************************************************************
+ok: [stapp01]
+ok: [stapp03]
+ok: [stapp02]
+
+TASK [Copy blog.txt to stapp01] **********************************************************************
+skipping: [stapp02]
+skipping: [stapp03]
+changed: [stapp01]
+
+TASK [Copy story.txt to stapp02] *********************************************************************
+skipping: [stapp01]
+skipping: [stapp03]
+changed: [stapp02]
+
+TASK [Copy media.txt to stapp03] *********************************************************************
+skipping: [stapp01]
+skipping: [stapp02]
+changed: [stapp03]
+
+PLAY RECAP *******************************************************************************************
+stapp01                    : ok=2    changed=1    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+stapp02                    : ok=2    changed=1    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+stapp03                    : ok=2    changed=1    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+
+
+
+************** VERIFICATION **************************************************************
+
+thor@jump_host ~/ansible$ ansible all -a "ls -ltr /opt/finance" -i inventory
+stapp01 | CHANGED | rc=0 >>
+total 4
+-rw-r-xr-x 1 tony tony 35 Apr  9 09:47 blog.txt
+stapp03 | CHANGED | rc=0 >>
+total 4
+-rw-r-xr-x 1 banner banner 22 Apr  9 09:47 media.txt
+stapp02 | CHANGED | rc=0 >>
+total 4
+-rw-r-xr-x 1 steve steve 27 Apr  9 09:47 story.txt
+thor@jump_host ~/ansible$
+
+
