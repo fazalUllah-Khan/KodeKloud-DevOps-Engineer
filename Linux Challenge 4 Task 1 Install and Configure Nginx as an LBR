@@ -1,0 +1,59 @@
+Day by day traffic is increasing on one of the websites managed by the Nautilus production support team. Therefore, the team has observed a degradation in website performance. Following discussions about this issue, the team has decided to deploy this application on a high availability stack i.e on Nautilus infra in Stratos DC. They started the migration last month and it is almost done, as only the LBR server configuration is pending. Configure LBR server as per the information given below:
+
+
+      a. Install nginx on LBR (load balancer) server.
+
+      b. Configure load-balancing with the an http context making use of all App Servers.
+
+      c. Make sure you do not update the apache port that is already defined in the apache configuration on all app servers, also make sure apache service is up and running on all app servers.
+
+      d. Once done, you can access the website using StaticApp button on the top bar.
+
+
+********************* # Solution *********************
+1. Login Nautilus HTTP LBR
+   ssh loki@stlb01 & sudo su -
+2. yum install nginx -y
+3. Check systemctl status httpd --> Shall get error : Unit httpd.service could not be found
+4. before changing /updating /etc/nginx/nginx.conf better to login any stapp0x server and check httpd Listen port 
+4A- [root@stapp01 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+    # Listen: Allows you to bind Apache to specific IP addresses and/or
+    # Change this to Listen on specific IP addresses as shown below to 
+    #Listen 12.34.56.78:80
+    Listen 8088
+    [root@stapp01 ~]# 
+  P.S , since as per task we shall not change Listening port 
+4B. update nginx config file vi /etc/nginx/nginx.conf 
+    http {
+    upstream backend {
+        server 172.16.238.10:8088;
+        server 172.16.238.11:8088;
+        server 172.16.238.12:8088;
+ }
+  and also update 
+          # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+         proxy_pass http://backend;
+        }
+5. Restart Nginx and check status 
+    systemctl restart nginx && systemctl status nginx 
+6. Login to stapp0x servers one by one and check status of httpd 
+   systemctl status httpd
+7. Update vi /etc/httpd/conf/httpd.conf
+    # Change this to Listen on specific IP addresses as shown below to 
+    # prevent Apache from glomming onto all bound IP addresses.
+    #
+    #Listen 12.34.56.78:80
+    Listen 172.16.238.10:8088
+AND
+   # If your host doesn't have a registered DNS name, enter its IP address here.
+   #
+   ServerName stapp01.stratos.xfusioncorp.com:8088
+  -- Same for all servers
+8. Restart httpd and check status 
+    systemctl restart httpd && systemctl status httpd
+9. Check /click staticApp button in top right conner to verify web sites working and displace Welcome to xFusionCorp Industries! for severs 
+
+
