@@ -1,0 +1,100 @@
+
+The Nautilus application development team has shared that they are planning to deploy one newly developed application on Nautilus infra in Stratos DC. The application uses PostgreSQL database, so as a pre-requisite we need 
+to set up PostgreSQL database server as per requirements shared below:
+
+
+PostgreSQL database server is already installed on the Nautilus database server.
+
+      a. Create a database user kodekloud_cap and set its password to ksH85UJjhb.
+
+      b. Create a database kodekloud_db3 and grant full permissions to user kodekloud_cap on this database.
+
+Note: Please do not try to restart PostgreSQL server service.
+
+
+***************************** # Solution ****************************
+thor@jump_host ~$ ssh peter@stdb01
+The authenticity of host 'stdb01 (172.16.239.10)' can't be established.
+ECDSA key fingerprint is SHA256:MkPhbzbgDzd9cGHHrQ1xFRkRXs1S7e629BZV2W+74tY.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stdb01,172.16.239.10' (ECDSA) to the list of known hosts.
+peter@stdb01's password: 
+[peter@stdb01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for peter: 
+[root@stdb01 ~]# systemctl status postgresql
+● postgresql.service - PostgreSQL database server
+   Loaded: loaded (/usr/lib/systemd/system/postgresql.service; disabled; vendor preset: disabled)
+   Active: active (running) since Tue 2024-04-09 12:13:15 UTC; 8min ago
+  Process: 812 ExecStartPre=/usr/libexec/postgresql-check-db-dir postgresql (code=exited, status=0/SUC
+CESS)
+ Main PID: 814 (postmaster)
+    Tasks: 8 (limit: 1340692)
+   Memory: 18.9M
+   CGroup: /docker/c9d244b4b8a2db3789c609a341fe3157f81bbcfefe1d0c52f4d17c97a96ca8c7/system.slice/postg
+resql.service
+           ├─814 /usr/bin/postmaster -D /var/lib/pgsql/data
+           ├─827 postgres: logger process   
+           ├─829 postgres: checkpointer process   
+           ├─830 postgres: writer process   
+           ├─831 postgres: wal writer process   
+           ├─832 postgres: autovacuum launcher process   
+           ├─833 postgres: stats collector process   
+           └─834 postgres: bgworker: logical replication launcher   
+
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com postmaster[814]: 2024-04-09 12:13:15.663 UTC [814] HINT
+:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com postmaster[814]: 2024-04-09 12:13:15.665 UTC [814] LOG:
+  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com postmaster[814]: 2024-04-09 12:13:15.667 UTC [814] LOG:
+  listening on Unix socket "/tmp/.s.PGSQL.5432"
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com postmaster[814]: 2024-04-09 12:13:15.677 UTC [814] LOG:
+  redirecting log output to logging collector process
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com postmaster[814]: 2024-04-09 12:13:15.677 UTC [814] HINT
+:  Future log output will appear in directory "log".
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com systemd[1]: postgresql.service:
+ Got notification message from PID 814 (READY=1)
+Apr 09 12:13:15 stdb01.stratos.xfusioncorp.com systemd[1]: postgresql.service:
+ Changed start -> running
+
+[root@stdb01 ~]# sudo -u postgres psql
+could not change directory to "/root": Permission denied
+psql (10.23)
+Type "help" for help.
+
+postgres=# CREATE USER kodekloud_cap WITH PASSWORD 'ksH85UJjhb'
+postgres-# CREATE DATABASE kodekloud_db3;
+ERROR:  syntax error at or near "CREATE"
+LINE 2: CREATE DATABASE kodekloud_db3;
+        ^
+postgres=# CREATE DATABASE kodekloud_db3;
+CREATE DATABASE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "kodekloud_db3" to kodekloud_cap;
+ERROR:  role "kodekloud_cap" does not exist
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "kodekloud_db3" to kodekloud_cap;
+ERROR:  role "kodekloud_cap" does not exist
+postgres=# CREATE USER kodekloud_cap WITH PASSWORD 'ksH85UJjhb';
+CREATE ROLE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE "kodekloud_db3" to kodekloud_cap;
+GRANT
+postgres=# \q
+[root@stdb01 ~]# psql -U kodekloud_cap -d kodekloud_db3 -h 127.0.0.1 -W
+Password for user kodekloud_cap: 
+psql (10.23)
+Type "help" for help.
+
+kodekloud_db3=> \q
+[root@stdb01 ~]# psql -U kodekloud_cap -d kodekloud_db3 -h localhost -W
+Password for user kodekloud_cap: 
+psql (10.23)
+Type "help" for help.
+
+kodekloud_db3=>
+
