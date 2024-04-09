@@ -1,0 +1,113 @@
+Nautilus Application development team wants to test the Apache and PHP setup on one of the app servers in Stratos Datacenter. They want the DevOps team to prepare an Ansible playbook to accomplish this task. 
+Below you can find more details about the task.
+
+There is an inventory file ~/playbooks/inventory on jump host.
+
+Create a playbook ~/playbooks/httpd.yml on jump host and perform the following tasks on App Server 3.
+
+        a. Install httpd and php packages (whatever default version is available in yum repo).
+
+        b. Change default document root of Apache to /var/www/html/myroot in default Apache config /etc/httpd/conf/httpd.conf. Make sure /var/www/html/myroot path exists (if not please create the same).
+
+        c. There is a template ~/playbooks/templates/phpinfo.php.j2 on jump host. Copy this template to the Apache document root you created as phpinfo.php file and make sure user owner and the group owner for this file is apache user.
+
+        d. Start and enable httpd service.
+
+Note: Validation will try to run the playbook using command ansible-playbook -i inventory httpd.yml, so please make sure the playbook works this way without passing any extra arguments.
+
+
+**************** # Solution ************************************************************************
+
+thor@jump_host ~$ ls -l
+total 4
+drwxr-xr-x 3 thor thor 4096 Apr  9 09:19 playbooks
+thor@jump_host ~$ cd ~/playbooks/
+thor@jump_host ~/playbooks$ ls -l
+total 12
+-rw-r--r-- 1 thor thor   36 Apr  9 09:19 ansible.cfg
+-rw-r--r-- 1 thor thor  237 Apr  9 09:19 inventory
+drwxr-xr-x 2 thor thor 4096 Apr  9 09:19 templates
+thor@jump_host ~/playbooks$ vi httpd.yml
+thor@jump_host ~/playbooks$ cat httpd.yml
+- name: Setup Httpd and PHP
+  hosts: stapp03
+  become: yes
+  tasks:
+    - name: Install latest version of httpd and php
+      package:
+        name:
+          - httpd
+          - php
+        state: latest
+    - name: Replace default DocumentRoot in httpd.conf
+      replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: DocumentRoot \"\/var\/www\/html\"
+        replace: DocumentRoot "/var/www/html/myroot"
+    - name: Create the new DocumentRoot directory if it does not exist
+      file:
+        path: /var/www/html/myroot
+        state: directory
+        owner: apache
+        group: apache
+    - name: Use Jinja2 template to generate phpinfo.php
+      template:
+        src: /home/thor/playbooks/templates/phpinfo.php.j2
+        dest: /var/www/html/myroot/phpinfo.php
+        owner: apache
+        group: apache
+    - name: Start and enable service httpd
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+thor@jump_host ~/playbooks$ ansible-playbook -i inventory httpd.yml
+
+PLAY [Setup Httpd and PHP] ***************************************************************************
+
+TASK [Gathering Facts] *******************************************************************************
+ok: [stapp03]
+
+TASK [Install latest version of httpd and php] *******************************************************
+changed: [stapp03]
+
+TASK [Replace default DocumentRoot in httpd.conf] ****************************************************
+changed: [stapp03]
+
+TASK [Create the new DocumentRoot directory if it does not exist] ************************************
+changed: [stapp03]
+
+TASK [Use Jinja2 template to generate phpinfo.php] ***************************************************
+changed: [stapp03]
+
+TASK [Start and enable service httpd] ****************************************************************
+changed: [stapp03]
+
+PLAY RECAP *******************************************************************************************
+stapp03                    : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+thor@jump_host ~/playbooks$
+
+
+******************** VERIFICATION *************************************
+Login to server to verify,.
+Last login: Tue Apr  9 09:19:40 UTC 2024 on pts/0
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:vmUDHFT7APwnyj0icf5jEeUnp94fEMxIh3sau6zPiQ0.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+Last login: Tue Apr  9 09:26:06 2024 from 172.16.238.3
+[banner@stapp03 ~]$ rpm -qa |grep httpd
+httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64
+httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch
+centos-logos-httpd-85.8-2.el8.noarch
+httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64
+[banner@stapp03 ~]$ rpm -qa |grep php
+php-common-7.2.24-1.module+el8.2.0+4601+7c76a223.x86_64
+php-7.2.24-1.module+el8.2.0+4601+7c76a223.x86_64
+php-cli-7.2.24-1.module+el8.2.0+4601+7c76a223.x86_64
+php-fpm-7.2.24-1.module+el8.2.0+4601+7c76a223.x86_64
+[banner@stapp03 ~]$
+
