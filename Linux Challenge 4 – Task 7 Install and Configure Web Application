@@ -1,0 +1,374 @@
+xFusionCorp Industries is planning to host two static websites on their infra in Stratos Datacenter. The development of these websites is still in-progress, but we want to get the servers ready. Please perform the following steps to accomplish the task:
+
+
+    a. Install httpd package and dependencies on app server 3.
+
+    b. Apache should serve on port 8089.
+
+    c. There are two website's backups /home/thor/official and /home/thor/games on jump_host. Set them up on Apache in a way that official should work on the link http://localhost:8089/official/ and
+       games should work on link http://localhost:8089/games/ on the mentioned app server.
+
+    d. Once configured you should be able to access the website using curl command on the respective app server, i.e curl http://localhost:8089/official/ and curl http://localhost:8089/games/
+
+************************************ # Solution **************************************
+************************************** Step 01 : *************************************
+i- Login to App server 3 ssh and sudo su -
+ii- install openssh service for copying scp files       : yum install  -y openssh-clients
+iii- Restart , enable and check status of sshd 
+*******************************************************************************
+thor@jump_host ~$ ssh banner@stapp03
+The authenticity of host 'stapp03 (172.16.238.12)' can't be established.
+ECDSA key fingerprint is SHA256:A96zZ1jbUjZ4OMq43cuWxjs6TO1hXh8FgGWwccb+SB4.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp03,172.16.238.12' (ECDSA) to the list of known hosts.
+banner@stapp03's password: 
+[banner@stapp03 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for banner: 
+[root@stapp03 ~]#  yum install  -y openssh-clients
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+CentOS Stream 8 - AppStream                                            30 kB/s | 4.4 kB     00:00    
+CentOS Stream 8 - AppStream                                            27 MB/s |  28 MB     00:01    
+CentOS Stream 8 - BaseOS                                               12 kB/s | 3.9 kB     00:00    
+CentOS Stream 8 - BaseOS                                              8.1 MB/s |  10 MB     00:01    
+CentOS Stream 8 - Extras                                              6.6 kB/s | 2.9 kB     00:00    
+CentOS Stream 8 - Extras common packages                              7.3 kB/s | 3.0 kB     00:00    
+CentOS Stream 8 - Extras common packages                               19 kB/s | 7.7 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS                        2.7 MB/s | 718 kB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - AppStream                      14 MB/s | 3.0 MB     00:00    
+Red Hat Universal Base Image 8 (RPMs) - CodeReady Builder             828 kB/s | 103 kB     00:00    
+Package openssh-clients-8.0p1-17.el8.x86_64 is already installed.
+Dependencies resolved.
+======================================================================================================
+ Package                      Architecture        Version                   Repository           Size
+======================================================================================================
+Upgrading:
+ openssh                      x86_64              8.0p1-24.el8              baseos              529 k
+ openssh-clients              x86_64              8.0p1-24.el8              baseos              650 k
+ openssh-server               x86_64              8.0p1-24.el8              baseos              496 k
+
+Transaction Summary
+======================================================================================================
+Upgrade  3 Packages
+
+Total download size: 1.6 M
+Downloading Packages:
+(1/3): openssh-server-8.0p1-24.el8.x86_64.rpm                         1.4 MB/s | 496 kB     00:00    
+(2/3): openssh-clients-8.0p1-24.el8.x86_64.rpm                        1.6 MB/s | 650 kB     00:00    
+(3/3): openssh-8.0p1-24.el8.x86_64.rpm                                1.2 MB/s | 529 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 2.5 MB/s | 1.6 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Running scriptlet: openssh-8.0p1-24.el8.x86_64                                                  1/1 
+  Running scriptlet: openssh-8.0p1-24.el8.x86_64                                                  1/6 
+  Upgrading        : openssh-8.0p1-24.el8.x86_64                                                  1/6 
+  Upgrading        : openssh-clients-8.0p1-24.el8.x86_64                                          2/6 
+  Running scriptlet: openssh-server-8.0p1-24.el8.x86_64                                           3/6 
+  Upgrading        : openssh-server-8.0p1-24.el8.x86_64                                           3/6 
+warning: /etc/ssh/sshd_config created as /etc/ssh/sshd_config.rpmnew
+
+  Running scriptlet: openssh-server-8.0p1-24.el8.x86_64                                           3/6 
+  Running scriptlet: openssh-server-8.0p1-17.el8.x86_64                                           4/6 
+  Cleanup          : openssh-server-8.0p1-17.el8.x86_64                                           4/6 
+  Running scriptlet: openssh-server-8.0p1-17.el8.x86_64                                           4/6 
+  Cleanup          : openssh-clients-8.0p1-17.el8.x86_64                                          5/6 
+  Cleanup          : openssh-8.0p1-17.el8.x86_64                                                  6/6 
+  Running scriptlet: openssh-8.0p1-17.el8.x86_64                                                  6/6 
+  Verifying        : openssh-8.0p1-24.el8.x86_64                                                  1/6 
+  Verifying        : openssh-8.0p1-17.el8.x86_64                                                  2/6 
+  Verifying        : openssh-clients-8.0p1-24.el8.x86_64                                          3/6 
+  Verifying        : openssh-clients-8.0p1-17.el8.x86_64                                          4/6 
+  Verifying        : openssh-server-8.0p1-24.el8.x86_64                                           5/6 
+  Verifying        : openssh-server-8.0p1-17.el8.x86_64                                           6/6 
+Installed products updated.
+
+Upgraded:
+  openssh-8.0p1-24.el8.x86_64 openssh-clients-8.0p1-24.el8.x86_64 openssh-server-8.0p1-24.el8.x86_64
+
+Complete!
+[root@stapp03 ~]# systemctl restart sshd
+[root@stapp03 ~]# systemctl enable sshd
+[root@stapp03 ~]# systemctl status sshd
+● sshd.service - OpenSSH server daemon
+   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)
+   Active: active (running) since Wed 2024-04-10 21:52:12 UTC; 19s ago
+     Docs: man:sshd(8)
+           man:sshd_config(5)
+ Main PID: 881 (sshd)
+    Tasks: 2 (limit: 1340692)
+   Memory: 286.8M
+   CGroup: /docker/0ec610851ae54e7f3819627f408b58d6770fedd4934577a3b245eb3fe8fd8498/system.slice/sshd.
+service
+           ├─ 530 sshd: banner [priv]
+           ├─ 544 sshd: banner@pts/0
+           ├─ 545 -bash
+           ├─ 564 sudo su -
+           ├─ 571 su -
+           ├─ 578 -bash
+           ├─ 881 /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes
+256-ctr,aes256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cbc -oMACs=hmac-sha2-256-etm@openssh.com,h
+mac-sha1-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha
+1,umac-128@openssh.com,hmac-sha2-512 -oGSSAPIKexAlgorithms=gss-curve25519-sha256-,gss-nistp256-sha256-
+,gss-group14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-group14-sha1- -oKexAlgorithms=curve25519-sh
+a256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hell
+man-group-exchange-sha256,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-g
+roup18-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=ecdsa
+-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v
+01@openssh.com,ecdsa-sha2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-ce
+rt-v01@openssh.com,rsa-sha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@o
+penssh.com,ssh-rsa,ssh-rsa-cert-v01@openssh.com -oPubkeyAcceptedKeyTypes=ecdsa-sha2-nistp256,ecdsa-sha
+2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha
+2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-s
+ha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.com,ssh-rsa,ssh-r
+sa-cert-v01@openssh.com -oCASignatureAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nis
+tp521,ssh-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rsa
+           ├─1027 systemctl status sshd
+           └─1040 more
+
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com sshd[881]: WARNING: 'UsePAM no' is not supported in RH
+EL and may cause several problems.
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com sshd[881]: Server listening on 0.0.0.0 port 22.
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com sshd[881]: Server listening on :: port 22.
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Got 
+notification message from PID 881 (READY=1)
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Chan
+ged start -> running
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Job 
+sshd.service/start finished, result=done
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com systemd[1]: Started OpenSSH server daemon.
+Apr 10 21:52:12 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Fail
+ed to send unit change signal for sshd.service: Connection reset by peer
+Apr 10 21:52:25 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Chan
+ged dead -> running
+Apr 10 21:52:25 stapp03.stratos.xfusioncorp.com systemd[1]: sshd.service: Fail
+ed to set invocation ID on control group /docker/0ec610851ae54e7f3819627f408b58d6770fedd4934577a3b245e
+b3fe8fd8498/system.slice/sshd.service, ignoring: Operation not permitted
+[root@stapp03 ~]# 
+[root@stapp03 ~]# 
+[root@stapp03 ~]# 
+[root@stapp03 ~]#
+
+************************************* Step 02: *********************************************************
+i- copy the two websites folder  from Jumpserver to  app server
+********************************************************************************************************
+
+Last login: Wed Apr 10 21:46:02 UTC 2024 on pts/0
+thor@jump_host ~$ scp -r /home/thor/official banner@stapp03:/tmp
+banner@stapp03's password: 
+index.html                                                          100%  121   663.3KB/s   00:00    
+thor@jump_host ~$  scp -r /home/thor/games banner@stapp03:/tmp
+banner@stapp03's password: 
+index.html                                                          100%  118   438.7KB/s   00:00    
+thor@jump_host ~$ ^C
+thor@jump_host ~$
+
+*******************************************************************************
+************************** Step 03: ********************************************
+********************************************************************************
+
+i- on App server 03 install httpd 
+  P.S you must login to server as sudo su - (rrot user)
+ii- Edit configuration file  vi etc/httpd/conf/httpd.conf & change Listen port to 8089
+iii- Restart , enable , check status of httpd
+iv- Move  copied  folders  from tmp to /var/www/html folder 
+
+***************************
+thor@jump_host ~$ ssh banner@stapp03
+banner@stapp03's password: 
+Last login: Wed Apr 10 21:51:21 2024 from 172.16.238.2
+[banner@stapp03 ~]$ sudo su -
+[sudo] password for banner: 
+Last login: Wed Apr 10 21:51:27 UTC 2024 on pts/0
+[root@stapp03 ~]# yum install  -y httpd
+Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Last metadata expiration check: 0:04:49 ago on Wed Apr 10 21:51:56 2024.
+Dependencies resolved.
+======================================================================================================
+ Package                  Architecture Version                                  Repository       Size
+======================================================================================================
+Installing:
+ httpd                    x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       1.6 M
+Installing dependencies:
+ apr                      x86_64       1.6.3-12.el8                             appstream       129 k
+ apr-util                 x86_64       1.6.1-9.el8                              appstream       106 k
+ centos-logos-httpd       noarch       85.8-2.el8                               appstream        75 k
+ httpd-filesystem         noarch       2.4.37-64.module_el8+965+1ad5c49d        appstream        44 k
+ httpd-tools              x86_64       2.4.37-64.module_el8+965+1ad5c49d        appstream       112 k
+ mailcap                  noarch       2.1.48-3.el8                             baseos           39 k
+ mod_http2                x86_64       1.15.7-10.module_el8+1009+c203647a       appstream       156 k
+Installing weak dependencies:
+ apr-util-bdb             x86_64       1.6.1-9.el8                              appstream        25 k
+ apr-util-openssl         x86_64       1.6.1-9.el8                              appstream        27 k
+Enabling module streams:
+ httpd                                 2.4                                                           
+
+Transaction Summary
+======================================================================================================
+Install  10 Packages
+
+Total download size: 2.2 M
+Installed size: 5.6 M
+Downloading Packages:
+(1/10): apr-util-bdb-1.6.1-9.el8.x86_64.rpm                           189 kB/s |  25 kB     00:00    
+(2/10): apr-util-openssl-1.6.1-9.el8.x86_64.rpm                       848 kB/s |  27 kB     00:00    
+(3/10): apr-1.6.3-12.el8.x86_64.rpm                                   690 kB/s | 129 kB     00:00    
+(4/10): apr-util-1.6.1-9.el8.x86_64.rpm                               555 kB/s | 106 kB     00:00    
+(5/10): httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch.rpm 1.4 MB/s |  44 kB     00:00    
+(6/10): centos-logos-httpd-85.8-2.el8.noarch.rpm                      1.2 MB/s |  75 kB     00:00    
+(7/10): httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm      3.4 MB/s | 112 kB     00:00    
+(8/10): mod_http2-1.15.7-10.module_el8+1009+c203647a.x86_64.rpm       2.5 MB/s | 156 kB     00:00    
+(9/10): httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64.rpm             12 MB/s | 1.6 MB     00:00    
+(10/10): mailcap-2.1.48-3.el8.noarch.rpm                              184 kB/s |  39 kB     00:00    
+------------------------------------------------------------------------------------------------------
+Total                                                                 3.4 MB/s | 2.2 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                              1/1 
+  Installing       : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Running scriptlet: apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Installing       : apr-util-bdb-1.6.1-9.el8.x86_64                                             2/10 
+  Installing       : apr-util-openssl-1.6.1-9.el8.x86_64                                         3/10 
+  Installing       : apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Running scriptlet: apr-util-1.6.1-9.el8.x86_64                                                 4/10 
+  Installing       : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        5/10 
+  Installing       : mailcap-2.1.48-3.el8.noarch                                                 6/10 
+  Running scriptlet: httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Installing       : centos-logos-httpd-85.8-2.el8.noarch                                        8/10 
+  Installing       : mod_http2-1.15.7-10.module_el8+1009+c203647a.x86_64                         9/10 
+  Installing       : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Running scriptlet: httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                             10/10 
+  Verifying        : apr-1.6.3-12.el8.x86_64                                                     1/10 
+  Verifying        : apr-util-1.6.1-9.el8.x86_64                                                 2/10 
+  Verifying        : apr-util-bdb-1.6.1-9.el8.x86_64                                             3/10 
+  Verifying        : apr-util-openssl-1.6.1-9.el8.x86_64                                         4/10 
+  Verifying        : centos-logos-httpd-85.8-2.el8.noarch                                        5/10 
+  Verifying        : httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                              6/10 
+  Verifying        : httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                   7/10 
+  Verifying        : httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                        8/10 
+  Verifying        : mod_http2-1.15.7-10.module_el8+1009+c203647a.x86_64                         9/10 
+  Verifying        : mailcap-2.1.48-3.el8.noarch                                                10/10 
+Installed products updated.
+
+Installed:
+  apr-1.6.3-12.el8.x86_64                                                                             
+  apr-util-1.6.1-9.el8.x86_64                                                                         
+  apr-util-bdb-1.6.1-9.el8.x86_64                                                                     
+  apr-util-openssl-1.6.1-9.el8.x86_64                                                                 
+  centos-logos-httpd-85.8-2.el8.noarch                                                                
+  httpd-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                      
+  httpd-filesystem-2.4.37-64.module_el8+965+1ad5c49d.noarch                                           
+  httpd-tools-2.4.37-64.module_el8+965+1ad5c49d.x86_64                                                
+  mailcap-2.1.48-3.el8.noarch                                                                         
+  mod_http2-1.15.7-10.module_el8+1009+c203647a.x86_64                                                 
+
+Complete!
+[root@stapp03 ~]# cat etc/httpd/conf/httpd.conf |grep Listen
+cat: etc/httpd/conf/httpd.conf: No such file or directory
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 80
+[root@stapp03 ~]# vi /etc/httpd/conf/httpd.conf
+[root@stapp03 ~]# cat /etc/httpd/conf/httpd.conf |grep Listen
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# Change this to Listen on specific IP addresses as shown below to 
+#Listen 12.34.56.78:80
+Listen 8089
+[root@stapp03 ~]# systemctl enable httpd
+Created symlink /etc/systemd/system/multi-user.target.wants/httpd.service → /usr/lib/systemd/system/httpd.service.
+[root@stapp03 ~]# systemctl start httpd
+[root@stapp03 ~]# systemctl status httpd
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Wed 2024-04-10 21:58:58 UTC; 9s ago
+     Docs: man:httpd.service(8)
+ Main PID: 1639 (httpd)
+   Status: "Running, listening on: port 8089"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.3M
+   CGroup: /docker/0ec610851ae54e7f3819627f408b58d6770fedd4934577a3b245eb3fe8fd8498/system.slice/httpd
+.service
+           ├─1639 /usr/sbin/httpd -DFOREGROUND
+           ├─1665 /usr/sbin/httpd -DFOREGROUND
+           ├─1666 /usr/sbin/httpd -DFOREGROUND
+           ├─1667 /usr/sbin/httpd -DFOREGROUND
+           └─1668 /usr/sbin/httpd -DFOREGROUND
+
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Fai
+led to send unit change signal for httpd.service: Connection reset by peer
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1639 (RELOADING=1, STATUS=Reading configuration...)
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged running -> reload
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Ins
+talled new job httpd.service/nop as 161
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Job
+ httpd.service/nop finished, result=done
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com httpd[1639]: Server configured, listening on: port 808
+9
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1639 (READY=1, STATUS=Configuration loaded.)
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Cha
+nged reload -> running
+Apr 10 21:58:58 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1639 (READY=1, STATUS=Started, listening on: port 8089, MAINPID=1639)
+m
+Apr 10 21:59:07 stapp03.stratos.xfusioncorp.com systemd[1]: httpd.service: Got
+ notification message from PID 1639 (READY=1, STATUS=Running, listening on: port 8089)
+[root@stapp03 ~]# mv /tmp/official/  /var/www/html/
+[root@stapp03 ~]# mv /tmp/games/  /var/www/html/
+[root@stapp03 ~]# ls -l /var/www/html/
+total 8
+drwxr-xr-x 2 banner banner 4096 Apr 10 21:54 games
+drwxr-xr-x 2 banner banner 4096 Apr 10 21:53 official
+[root@stapp03 ~]#
+
+*****************************************************************
+Step 04- VERIFICATION 
+****************************************************************
+[root@stapp03 ~]# curl http://localhost:8089/official/
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>KodeKloud</h1>
+
+<p>This is a sample page for our official website</p>
+
+</body>
+</html>[root@stapp03 ~]# curl http://localhost:8089/games/
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>KodeKloud</h1>
+
+<p>This is a sample page for our games website</p>
+
+</body>
+</html>[root@stapp03 ~]#
