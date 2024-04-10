@@ -1,0 +1,33 @@
+We need to setup a database server on Nautilus DB Server in Stratos Datacenter. Please perform the below given steps on DB Server:
+
+
+a. Install/Configure MariaDB server.
+
+b. Create a database named kodekloud_db8.
+
+c. Create a user called kodekloud_cap and set its password to Rc5C9EyvbU.
+
+d. Grant full permissions to user kodekloud_cap on database kodekloud_db8.
+
+Test: Mysql -u kodekloud_joy -p ih localhost
+
+*************** # Solution: **************************
+
+1. Login to Nautilus DB Server ssh 	peter@stdb01 and Sudo su - --> Enter required password
+2. install required packages & Restart , start and check status of mariadb
+    yum install openssh-clients -y
+    sudo yum install -y mariadb-server
+    sudo yum install -y mariadb*
+    systemctl restart mariadb
+    sudo systemctl enable mariadb && systemctl start mariadb && systemctl status mariadb
+    
+3. sudo mysql_secure_installation 
+4. configure db and Db user and grant permissions
+    mysql -u root -p
+    create database kodekloud_db2;
+    CREATE USER 'kodekloud_cap'@localhost IDENTIFIED BY 'pass';
+    grant all on kodekloud_db2.* to 'kodekloud_cap' IDENTIFIED BY 'pass' WITH GRANT OPTION;
+    grant all privileges on kodekloud_db2.* to 'kodekloud_cap'@'%' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;
+    exit
+
