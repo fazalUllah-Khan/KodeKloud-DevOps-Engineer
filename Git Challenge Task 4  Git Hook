@@ -1,0 +1,68 @@
+The Nautilus application development team was working on a git repository /opt/apps.git which is cloned under /usr/src/kodekloudrepos directory present on Storage server 
+in Stratos DC. The team want to setup a hook on this repository, please find below more details:
+
+
+        •	Merge the feature branch into the master branch`, but before pushing your changes complete below point.
+
+        •	Create a post-update hook in this git repository so that whenever any changes are pushed to the master branch, it creates a release tag with name release-2023-06-15, where 2023-06-15 is supposed to be the current date. For example if today is 20th June, 2023 then the release tag must be release-2023-06-20. Make sure you test the hook at least once and create a release tag for today's release.
+
+        •	Finally remember to push your changes.
+
+************ SOlution **************************************
+thor@jump_host ~$ ssh natasha@ststor01
+The authenticity of host 'ststor01 (172.16.238.15)' can't be established.
+ECDSA key fingerprint is SHA256:EY/LhfVCZMIGPi89VSQPd6Ek1IKJdI2HTXY5+bo1McY.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'ststor01,172.16.238.15' (ECDSA) to the list of known hosts.
+natasha@ststor01's password: 
+[natasha@ststor01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for natasha: 
+[root@ststor01 ~]# cd /usr/src/kodekloudrepos/apps/
+[root@ststor01 apps]# git checkout master
+Switched to branch 'master'
+Your branch is up to date with 'origin/master'.
+[root@ststor01 apps]# git merge feature
+Updating efcbc36..2a0ca78
+Fast-forward
+ feature.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 feature.txt
+[root@ststor01 apps]# touch /opt/apps.git/hooks/post-update
+[root@ststor01 apps]# chmod +x /opt/apps.git/hooks/post-update
+[root@ststor01 apps]# vi /opt/apps.git/hooks/post-update
+[root@ststor01 apps]# cat /opt/apps.git/hooks/post-update
+#!/bin/bash
+cd /opt/apps.git
+git_tag=release-$(date "+%Y-%m-%d")
+git tag $git_tag
+
+[root@ststor01 apps]# git push
+Total 0 (delta 0), reused 0 (delta 0), pack-reused 0
+To /opt/apps.git
+   efcbc36..2a0ca78  master -> master
+[root@ststor01 apps]# git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+[root@ststor01 apps]# git log
+commit 2a0ca78b70be844eb48783d59df56628ceb3dbbc (HEAD -> master, origin/master, origin/feature, feature)
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Apr 11 19:40:16 2024 +0000
+
+    Add feature
+
+commit efcbc364a6c38caf07fdfe687ca12912d898fed9
+Author: Admin <admin@kodekloud.com>
+Date:   Thu Apr 11 19:40:16 2024 +0000
+
+    initial commit
+[root@ststor01 apps]#
