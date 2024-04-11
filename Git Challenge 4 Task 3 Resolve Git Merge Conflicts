@@ -1,0 +1,126 @@
+Sarah and Max were working on writting some stories which they have pushed to the repository. Max has recently added some new changes and is trying to push them to the repository but he is facing some issues.
+Below you can find more details:
+
+SSH into storage server using user max and password Max_pass123. Under /home/max you will find the story-blog repository. Try to push the changes to the origin repo and fix the issues. The story-index.txt must 
+have titles for all 4 stories. Additionally, there is a typo in The Lion and the Mooose line where Mooose should be Mouse.
+
+Click on the Gitea UI button on the top bar. You should be able to access the Gitea page. You can login to Gitea server from UI using username sarah and password Sarah_pass123 or username max and password Max_pass123.
+
+Note: For these kind of scenarios requiring changes to be done in a web UI, please take screenshots so that you can share it with us for review in case your task is marked incomplete. You may also consider using a screen 
+recording software such as loom.com to record and share your work
+
+********** Solution **************
+1. Click on Gitea UI login with max user and cridentials
+2. Check contents of sarah/ story-blog / story-index.txt 
+   A. Stoory si updated from 1 min and seems incomplete 
+3. Login as ssh max user at Nautilus Storage Server below is logs 
+   thor@jump_host ~$ ssh max@ststor01
+The authenticity of host 'ststor01 (172.16.238.15)' can't be established.
+ECDSA key fingerprint is SHA256:0z85j/k+4Nf8WKbHJzxo1AOv4FeRA8LPET2N3BEkYyo.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'ststor01,172.16.238.15' (ECDSA) to the list of known hosts.
+max@ststor01's password: 
+Welcome to xFusionCorp Storage server.
+max $ cd /home/max/story-blog/
+max (master)$ git push 
+Username for 'http://git.stratos.xfusioncorp.com': max
+Password for 'http://max@git.stratos.xfusioncorp.com': 
+To http://git.stratos.xfusioncorp.com/sarah/story-blog.git
+ ! [rejected]        master -> master (fetch first)
+error: failed to push some refs to 'http://git.stratos.xfusioncorp.com/sarah/story-blog.git'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+max (master)$ git config --global --add user.email max@stratos.xfusioncorp.com
+max (master)$ git config --global --add user.name max
+max (master)$ git pull origin master
+remote: Enumerating objects: 4, done.
+remote: Counting objects: 100% (4/4), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (3/3), done.
+From http://git.stratos.xfusioncorp.com/sarah/story-blog
+ * branch            master     -> FETCH_HEAD
+   dcf9a71..58a7f2a  master     -> origin/master
+Auto-merging story-index.txt
+CONFLICT (add/add): Merge conflict in story-index.txt
+Automatic merge failed; fix conflicts and then commit the result.
+max (master)$ vi story-index.txt
+max (master)$ cat story-index.txt
+1. The Lion and the Mouse
+2. The Frogs and the Ox
+3. The Fox and the Grapes
+4. The Donkey and the Dog
+
+max (master)$ git add story-index.txt
+max (master)$ git commit -m "fix typo and merge request"
+[master 029ad2a] fix typo and merge request
+max (master)$ git push origin master
+Username for 'http://git.stratos.xfusioncorp.com': max
+Password for 'http://max@git.stratos.xfusioncorp.com': 
+Counting objects: 7, done.
+Delta compression using up to 36 threads.
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 1.16 KiB | 0 bytes/s, done.
+Total 7 (delta 1), reused 0 (delta 0)
+remote: . Processing 1 references
+remote: Processed 1 references in total
+To http://git.stratos.xfusioncorp.com/sarah/story-blog.git
+   58a7f2a..029ad2a  master -> master
+max (master)$ git status
+On branch master
+Your branch is up-to-date with 'origin/master'.
+nothing to commit, working directory clean
+max (master)$ git logs
+git: 'logs' is not a git command. See 'git --help'.
+
+Did you mean this?
+        log
+max (master)$ git log
+commit 029ad2a3921d25fadd8ae17a35b4e33e6fe1a9dc
+Merge: 39557bd 58a7f2a
+Author: max <max@stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:18:17 2024 +0000
+
+    fix typo and merge request
+
+commit 39557bd45b409a462405dc5e9a527b045abaec2c
+Author: Linux User <max@ststor01.stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:14:47 2024 +0000
+
+    Added the fox and grapes story
+
+commit 58a7f2a90ec2ca8a90b81f21dc9e94bbeb60110d
+Author: sarah <sarah@stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:14:46 2024 +0000
+
+    Added Index
+
+commit dcf9a71d9118377020cfbb7a5b8503839396163d
+Merge: d579e3c e7914e7
+Author: sarah <sarah@stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:14:45 2024 +0000
+
+    Merge branch 'story/frogs-and-ox'
+
+commit d579e3cfc5a68deb5b1418dfd39121e237c3b904
+Author: sarah <sarah@stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:14:45 2024 +0000
+
+    Fix typo in story title
+
+commit e7914e7ff56200cd99494d0476c2f2799a6183b4
+max (master)$
+
+******** Verification **************
+git logs shows we just updated Sarah's one story 
+and while we login to sarah / story-blog and content of *.txt file is updated with recent time stamp (few seconds ago) 
+
+max (master)$ git log
+commit 5aeeba4f7a0adde57b5f1969036ca45e8cc9532e
+Author: sarah <sarah@stratos.xfusioncorp.com>
+Date:   Thu Apr 11 15:04:07 2024 +0000
+
+    Fix typo in story title
