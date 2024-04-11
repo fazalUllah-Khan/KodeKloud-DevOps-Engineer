@@ -1,0 +1,169 @@
+There is a requirement to Dockerize a Node app and to deploy the same on App Server 1. Under /node_app directory on App Server 1, we have already placed a package.json file that describes the app dependencies and server.js 
+file that defines a web app framework.
+
+
+1.	Create a Dockerfile (name is case sensitive) under /node_app directory:
+        •	Use any node image as the base image.
+        •	Install the dependencies using package.json file.
+        •	Use server.js in the CMD.
+        •	Expose port 3000.
+
+2.	The build image should be named as nautilus/node-web-app.
+
+3.	Now run a container named nodeapp_nautilus using this image.
+      •	Map the container port 8084 with the host port 8094.
+
+. Once deployed, you can test the app using a curl command on App Server 1:
+
+
+curl http://localhost:8084
+
+********************************************* SOLUTION ***********************************
+
+thor@jump_host ~$ ssh tony@stapp01
+The authenticity of host 'stapp01 (172.16.238.10)' can't be established.
+ECDSA key fingerprint is SHA256:yE5zi5tH2Y6bMJIoPRcbtvvSOLC6kGU9hWuBcp41jMo.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp01,172.16.238.10' (ECDSA) to the list of known hosts.
+tony@stapp01's password: 
+[tony@stapp01 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for tony: 
+[root@stapp01 ~]# cd 
+[root@stapp01 ~]# cd /node_app
+[root@stapp01 node_app]# ls -al
+total 16
+drwxr-xr-x 2 root root 4096 Apr 11 12:17 .
+drwxr-xr-x 1 root root 4096 Apr 11 12:17 ..
+-rw-r--r-- 1 root root  332 Apr 11 12:17 package.json
+-rw-r--r-- 1 root root  296 Apr 11 12:17 server.js
+[root@stapp01 node_app]# vi Dockerfile
+[root@stapp01 node_app]# cat Dockerfile
+
+FROM node:latest
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+COPY . .
+CMD ["node", "server.js"]
+EXPOSE 8084
+
+[root@stapp01 node_app]# docker build -t nautilus/node-web-app . 
+Sending build context to Docker daemon  4.096kB
+Step 1/7 : FROM node:latest
+latest: Pulling from library/node
+609c73876867: Pull complete 
+7247ea8d81e6: Pull complete 
+be374d06f382: Pull complete 
+b4580645a8e5: Pull complete 
+dfc93b8f025c: Pull complete 
+39dc53a31d48: Pull complete 
+5352fc760cd9: Pull complete 
+bdcd41242dbc: Pull complete 
+Digest: sha256:64f5c0619b62db2dfdd13dfa1b8c3361dcc95ec4bcbbb82b63146e9efa5f1e7e
+Status: Downloaded newer image for node:latest
+ ---> d1de70cc5b62
+Step 2/7 : WORKDIR /app
+ ---> Running in 38bf04ee1f5d
+Removing intermediate container 38bf04ee1f5d
+ ---> cb09be29afdd
+Step 3/7 : COPY package.json ./
+ ---> 8af786073ad6
+Step 4/7 : RUN npm install
+ ---> Running in 590f459ed5f2
+
+added 64 packages, and audited 65 packages in 4s
+
+12 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm notice 
+npm notice New patch version of npm available! 10.5.0 -> 10.5.2
+npm notice Changelog: <https://github.com/npm/cli/releases/tag/v10.5.2>
+npm notice Run `npm install -g npm@10.5.2` to update!
+npm notice 
+Removing intermediate container 590f459ed5f2
+ ---> b1580dbb3f18
+Step 5/7 : COPY . .
+ ---> 732bac3f6025
+Step 6/7 : CMD ["node", "server.js"]
+ ---> Running in e1af3c7a9a89
+Removing intermediate container e1af3c7a9a89
+ ---> f8cdb1506253
+Step 7/7 : EXPOSE 8084
+ ---> Running in 2ac543edc9e0
+Removing intermediate container 2ac543edc9e0
+ ---> 01699f2f5979
+Successfully built 01699f2f5979
+Successfully tagged nautilus/node-web-app:latest
+[root@stapp01 node_app]# docker images
+REPOSITORY              TAG                 IMAGE ID            CREATED             SIZE
+nautilus/node-web-app   latest              01699f2f5979        24 seconds ago      1.11GB
+node                    latest              d1de70cc5b62        24 hours ago        1.1GB
+[root@stapp01 node_app]# docker run -d -p 8094:8084 --name nodeapp_nautilus nautilus/node-web-app
+09c93efbd3094e1bbf9727f84c0b481fa128ac5e15f650e4f43671ae26ba7c8c
+
+
+******************************** VERIFICATION **********************************************
+[root@stapp01 node_app]# docker ps
+CONTAINER ID        IMAGE                   COMMAND                  CREATED              STATUS              PORTS                    NAMES
+09c93efbd309        nautilus/node-web-app   "docker-entrypoint.s…"   About a minute ago   Up 8 seconds        0.0.0.0:8094->8084/tcp   nodeapp_nautilus
+[root@stapp01 node_app]# curl http://localhost:8094
+Welcome to xFusionCorp Industries![root@stapp01 node_app]# 
+[root@stapp01 node_app]# curl -ik http://localhost:8094 
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: text/html; charset=utf-8
+Content-Length: 34
+ETag: W/"22-pI8HvFlmb5SQs7ghRnPnLOTQh7k"
+Date: Thu, 11 Apr 2024 12:45:44 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+Welcome to xFusionCorp Industries![root@stapp01 node_app]#
+
+
+********************server.js***************
+'use strict';
+
+const express = require('express');
+
+// Constants
+const PORT = 8087;
+const HOST = '0.0.0.0';
+
+// App
+const app = express();
+app.get('/', (req, res) => {
+    res.send('Welcome to xFusionCorp Industries!');
+});
+
+app.listen(PORT, HOST);
+
+****************** package.json ****************
+{
+  "name": "docker_web_app",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "Sample Test <sample.test@example.com>",
+  "main": "server.js",
+  "keywords": [
+    "nodejs",
+    "bootstrap",
+    "express"
+  ],
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}
