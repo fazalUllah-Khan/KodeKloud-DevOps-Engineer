@@ -1,0 +1,134 @@
+The Nautilus Application development team recently finished development of one of the apps that they want to deploy on a containerized platform. The Nautilus Application development and DevOps teams met to discuss some of the basic pre-requisites and requirements to complete the deployment. The team wants to test the deployment on one of the app servers before going live and set up a complete containerized stack using a docker compose fie. Below are the details of the task:
+
+
+1.	On App Server 3 in Stratos Datacenter create a docker compose file /opt/finance/docker-compose.yml (should be named exactly).
+
+2.	The compose should deploy two services (web and DB), and each service should deploy a container as per details below:
+
+For web service:
+
+        a. Container name must be php_apache.
+
+        b. Use image php with any apache tag. Check here for more details.
+
+        c. Map php_apache container's port 80 with host port 8088
+
+        d. Map php_apache container's /var/www/html volume with host volume /var/www/html.
+
+For DB service:
+
+        a. Container name must be mysql_apache.
+
+        b. Use image mariadb with any tag (preferably latest). Check here for more details.
+
+        c. Map mysql_apache container's port 3306 with host port 3306
+
+        d. Map mysql_apache container's /var/lib/mysql volume with host volume /var/lib/mysql.
+
+        e. Set MYSQL_DATABASE=database_apache and use any custom user ( except root ) with some complex password for DB connections.
+
+3.	After running docker-compose up you can access the app with curl command curl <server-ip or hostname>:8088/
+
+For more details check here.
+
+Note: Once you click on FINISH button, all currently running/stopped containers will be destroyed and stack will be deployed again using your compose file.
+
+***************************************************************************************
+********************* SOLUTION ********************************************************
+
+thor@jump_host ~$ ssh steve@stapp02
+The authenticity of host 'stapp02 (172.16.238.11)' can't be established.
+ECDSA key fingerprint is SHA256:CNOCS7dj1fJUvS+qanSQg0plm9kNzPpXypv7zKE5PrY.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'stapp02,172.16.238.11' (ECDSA) to the list of known hosts.
+steve@stapp02's password: 
+[steve@stapp02 ~]$ sudo su -
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+    #1) Respect the privacy of others.
+    #2) Think before you type.
+    #3) With great power comes great responsibility.
+
+[sudo] password for steve: 
+[root@stapp02 ~]# ls -l
+total 4
+-rw------- 1 root root 3415 Aug  1  2019 anaconda-ks.cfg
+[root@stapp02 ~]# cd /opt/data/
+[root@stapp02 data]# ls -l
+total 0
+[root@stapp02 data]# ls -l /opt/
+total 8
+drwx--x--x 4 root root 4096 Apr 11 10:50 containerd
+drwxr-xr-x 2 root root 4096 Apr 11 10:50 data
+[root@stapp02 data]# vi /opt/data/docker-compose.yml
+[root@stapp02 data]# cat /opt/data/docker-compose.yml
+version: '3'
+services:
+  web:
+    container_name: php_apache
+    image: php:apache
+    ports:
+      - "8085:80"
+    volumes:
+      - /var/www/html:/var/www/html
+  db:
+    image: mariadb:latest
+    container_name: mysql_apache
+    ports:
+      - "3306:3306"
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=database_apache
+      - MARIADB_ROOT_PASSWORD=mysql@123
+[root@stapp02 data]# docker-compose up -d
+php_apache is up-to-date
+Recreating mysql_apache ... done
+
+************* VERIFICATION ***************************
+[root@stapp02 data]# docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                    NAMES
+19c608d3282a   mariadb:latest   "docker-entrypoint.s…"   26 seconds ago   Up 14 seconds   0.0.0.0:3306->3306/tcp   mysql_apache
+82ee7dc535aa   php:apache       "docker-php-entrypoi…"   23 minutes ago   Up 22 minutes   0.0.0.0:8085->80/tcp     php_apache
+
+[root@stapp02 data]# docker inspect mysql_apache
+[
+    {
+        "Id": "19c608d3282a17c3c2bea95ce566b71f55f6bf6ebd247c4a498246a4535d9140",
+        "Created": "2024-04-11T11:23:22.46777705Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "mariadbd"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 2715,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2024-04-11T11:23:33.829251325Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+[root@stapp02 data]# curl -ik http://localhost:8085
+HTTP/1.1 200 OK
+Date: Thu, 11 Apr 2024 11:25:11 GMT
+Server: Apache/2.4.57 (Debian)
+X-Powered-By: PHP/8.3.4
+Vary: Accept-Encoding
+Content-Length: 161
+Content-Type: text/html; charset=UTF-8
+
+<html>
+    <head>
+        <title>Welcome to xFusionCorp Industries!</title>
+    </head>
+
+    <body>
+        Welcome to xFusionCorp Industries!    </body>
+</html>[root@stapp02 data]#
