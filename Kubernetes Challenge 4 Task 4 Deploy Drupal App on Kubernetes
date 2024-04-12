@@ -1,0 +1,186 @@
+We need to deploy a Drupal application on Kubernetes cluster. The Nautilus application development team want to setup a fresh Drupal as they will do the installation on their own. Below you can find the requirements,
+they have shared with us.
+
+              1) Configure a persistent volume drupal-mysql-pv with hostPath = /drupal-mysql-data (/drupal-mysql-data directory already exists on the worker Node i.e jump host), 5Gi of storage and ReadWriteOnce access mode.
+              2) Configure one PersistentVolumeClaim named drupal-mysql-pvc with storage request of 3Gi and ReadWriteOnce access mode. 
+              3) Create a deployment drupal-mysql with 1 replica, use mysql:5.7 image. Mount the claimed PVC at /var/lib/mysql.
+              4) Create a deployment drupal with 1 replica and use drupal:8.6 image.
+              5) Create a NodePort type service which should be named as drupal-service and nodePort should be 30095.
+              6) Create a service drupal-mysql-service to expose mysql deployment on port 3306.
+              7) Set rest of the configration for deployments, services, secrets etc as per your preferences. At the end you should be able to access the Drupal installation page by clicking on App button.
+
+Note: The kubectl on jump_host has been configured to work with the kubernetes cluster.
+
+******************************** SOLUTION ************************************************
+thor@jump_host ~$ ls -l
+total 0
+thor@jump_host ~$ ls -l /drupal-mysql-data
+total 0
+thor@jump_host ~$ vi /tmp/pv-pvc.yml
+thor@jump_host ~$ cat /tmp/pv-pvc.yml
+
+--- 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drupal-mysql-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /drupal-mysql-data
+--- 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drupal-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+
+
+thor@jump_host ~$ kubectl create -f /tmp/pv-pvc.yml
+persistentvolume/drupal-mysql-pv created
+persistentvolumeclaim/drupal-mysql-pvc created
+thor@jump_host ~$ vi /tmp/drupal-deploy-service.yml
+thor@jump_host ~$ cat /tmp/drupal-deploy-service.yml
+#### MySQL 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drupal-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drupal-mysql
+  template:
+    metadata:
+      labels:
+        app: drupal-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: mysql_root_pass
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: drupal-mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: drupal-mysql-storage
+          persistentVolumeClaim:
+            claimName: drupal-mysql-pvc
+---
+#### Drupal App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drupal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drupal
+  template:
+    metadata:
+      labels:
+        app: drupal
+    spec:
+      containers:
+        - name: drupal
+          image: drupal:8.6
+          ports:
+            - containerPort: 80
+--- 
+### NodePort Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: drupal-service
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30095
+  selector:
+    app: drupal
+--- 
+#### MySQL service 
+apiVersion: v1
+kind: Service
+metadata:
+  name: drupal-mysql-service
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: drupal-mysql
+
+
+
+thor@jump_host ~$ kubectl create -f /tmp/drupal-deploy-service.yml
+deployment.apps/drupal-mysql created
+deployment.apps/drupal created
+service/drupal-service created
+service/drupal-mysql-service created
+thor@jump_host ~$ kubectl get all
+NAME                                READY   STATUS              RESTARTS   AGE
+pod/drupal-5b67849c6-7qxjf          0/1     ContainerCreating   0          9s
+pod/drupal-mysql-6549f8bc94-gxlfc   0/1     ContainerCreating   0          9s
+
+NAME                           TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+service/drupal-mysql-service   ClusterIP   10.96.216.15   <none>        3306/TCP       8s
+service/drupal-service         NodePort    10.96.51.131   <none>        80:30095/TCP   9s
+service/kubernetes             ClusterIP   10.96.0.1      <none>        443/TCP        20m
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/drupal         0/1     1            0           9s
+deployment.apps/drupal-mysql   0/1     1            0           9s
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/drupal-5b67849c6          1         1         0       9s
+replicaset.apps/drupal-mysql-6549f8bc94   1         1         0       9s
+thor@jump_host ~$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                      STORAGECLASS   REASON   AGE
+drupal-mysql-pv                            5Gi        RWO            Retain           Available                                                      2m29s
+pvc-68a12b86-8a29-4134-b21b-bc682debcfaa   3Gi        RWO            Delete           Bound       default/drupal-mysql-pvc   standard                12s
+thor@jump_host ~$ kubectl get pvc
+NAME               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+drupal-mysql-pvc   Bound    pvc-68a12b86-8a29-4134-b21b-bc682debcfaa   3Gi        RWO            standard       2m30s
+thor@jump_host ~$ kubect get all
+bash: kubect: command not found
+thor@jump_host ~$ kubectl get all
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/drupal-5b67849c6-7qxjf          1/1     Running   0          59s
+pod/drupal-mysql-6549f8bc94-gxlfc   1/1     Running   0          59s
+
+NAME                           TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+service/drupal-mysql-service   ClusterIP   10.96.216.15   <none>        3306/TCP       58s
+service/drupal-service         NodePort    10.96.51.131   <none>        80:30095/TCP   59s
+service/kubernetes             ClusterIP   10.96.0.1      <none>        443/TCP        21m
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/drupal         1/1     1            1           59s
+deployment.apps/drupal-mysql   1/1     1            1           59s
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/drupal-5b67849c6          1         1         1       59s
+replicaset.apps/drupal-mysql-6549f8bc94   1         1         1       59s
+thor@jump_host ~$
+
+********************* VERIFICATION *************************************
+Click on 'APP' Button on top right in task window
+It will open 'Drupal' web with port 30095 in new table
+
